@@ -22,18 +22,23 @@ public class Index : PageModel
     private readonly SignInManager<IdentityUser> _signInManager;
     private readonly IAuthenticationSchemeProvider _schemeProvider;
     private readonly IIdentityProviderStore _identityProviderStore;
+    private readonly UserManager<IdentityUser> _userManager;
 
     public ViewModel View { get; set; } = default!;
 
     [BindProperty]
     public InputModel Input { get; set; } = default!;
 
+    [BindProperty]
+    public QuickRegisterInputModel QuickRegisterInput { get; set; } = default!;
+
     public Index(
         IIdentityServerInteractionService interaction,
         IAuthenticationSchemeProvider schemeProvider,
         IIdentityProviderStore identityProviderStore,
         IEventService events, 
-        SignInManager<IdentityUser> signInManager)
+        SignInManager<IdentityUser> signInManager,
+        UserManager<IdentityUser> userManager)
     {
 
         _interaction = interaction;
@@ -41,6 +46,7 @@ public class Index : PageModel
         _identityProviderStore = identityProviderStore;
         _events = events;
         _signInManager = signInManager;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> OnGet(string? returnUrl)
@@ -60,6 +66,79 @@ public class Index : PageModel
     {
         // check if we are in the context of an authorization request
         var context = await _interaction.GetAuthorizationContextAsync(Input.ReturnUrl);
+
+        // Handle QuickRegister button
+        if (QuickRegisterInput.Button == "quickregister")
+        {
+            // Clear ModelState and only validate QuickRegisterInput
+            ModelState.Clear();
+            if (TryValidateModel(QuickRegisterInput))
+            {
+                // Generate random password
+                var randomPassword = GenerateRandomPassword();
+                
+                // Create new user with random password
+                var user = new IdentityUser
+                {
+                    UserName = QuickRegisterInput.Name,
+                    Email = QuickRegisterInput.Email,
+                    EmailConfirmed = true
+                };
+
+                var result = await _userManager.CreateAsync(user, randomPassword);
+                
+                if (result.Succeeded)
+                {
+                    // Auto-login the new user
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    
+                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: context?.Client.ClientId));
+                    Telemetry.Metrics.UserLogin(context?.Client.ClientId, IdentityServerConstants.LocalIdentityProvider);
+
+                    // Create authentication cookie
+                    var isuser = new IdentityServerUser(user.Id)
+                    {
+                        DisplayName = user.UserName
+                    };
+
+                    await HttpContext.SignInAsync(isuser);
+
+                    if (context != null)
+                    {
+                        ArgumentNullException.ThrowIfNull(QuickRegisterInput.ReturnUrl, nameof(QuickRegisterInput.ReturnUrl));
+
+                        if (context.IsNativeClient())
+                        {
+                            return this.LoadingPage(QuickRegisterInput.ReturnUrl);
+                        }
+
+                        return Redirect(QuickRegisterInput.ReturnUrl ?? "~/");
+                    }
+
+                    if (Url.IsLocalUrl(QuickRegisterInput.ReturnUrl))
+                    {
+                        return Redirect(QuickRegisterInput.ReturnUrl);
+                    }
+                    else if (string.IsNullOrEmpty(QuickRegisterInput.ReturnUrl))
+                    {
+                        return Redirect("~/");
+                    }
+                    else
+                    {
+                        throw new ArgumentException("invalid return URL");
+                    }
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+            }
+
+            // If we got here, something failed, redisplay form
+            await BuildModelAsync(QuickRegisterInput.ReturnUrl);
+            return Page();
+        }
 
         // the user clicked the "cancel" button
         if (Input.Button != "login")
@@ -168,6 +247,11 @@ public class Index : PageModel
             ReturnUrl = returnUrl
         };
 
+        QuickRegisterInput = new QuickRegisterInputModel
+        {
+            ReturnUrl = returnUrl
+        };
+
         var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
         if (context?.IdP != null)
         {
@@ -230,5 +314,19 @@ public class Index : PageModel
             EnableLocalLogin = allowLocal && LoginOptions.AllowLocalLogin,
             ExternalProviders = providers.ToArray()
         };
+    }
+
+    private static string GenerateRandomPassword()
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        var random = new Random();
+        var password = new char[16];
+        
+        for (int i = 0; i < password.Length; i++)
+        {
+            password[i] = chars[random.Next(chars.Length)];
+        }
+        
+        return new string(password);
     }
 }
