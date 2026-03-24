@@ -8,11 +8,11 @@ public class QuickRegisterInputModel
     [Display(Name = "Név")]
     public string? Name { get; set; }
 
-    [EmailAddress(ErrorMessage = "Érvénytelen e-mail cím")]
-    [Display(Name = "E-mail (opcionális)")]
+    [EmailAddress(ErrorMessage = "Invalid e-mail address")]
+    [Display(Name = "E-mail (optional)")]
     public string? Email { get; set; }
 
-    [Display(Name = "Becenév")]
+    [Display(Name = "Nick")]
     public string? Nickname { get; set; }
 
     public string? ReturnUrl { get; set; }
