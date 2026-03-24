@@ -112,6 +112,11 @@
                                 <input class="form-control" placeholder="E-mail (opcionális)" asp-for="QuickRegisterInput.Email">
                             </div>
                             
+                            <div class="form-group">
+                                <label asp-for="QuickRegisterInput.Nickname"></label>
+                                <input class="form-control" placeholder="Becenév (opcionális)" asp-for="QuickRegisterInput.Nickname">
+                            </div>
+                            
                             <button class="btn btn-primary" name="QuickRegisterInput.Button" value="quickregister" autofocus>Regisztráció</button>
                             <button class="btn btn-secondary" name="QuickRegisterInput.Button" value="cancel">Mégse</button>
                         </form>

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
+using System.Security.Claims;
 
 namespace IdentityService.Pages.Login;
 
@@ -238,6 +239,12 @@ public class Index : PageModel
             
             if (result.Succeeded)
             {
+                // Add nickname claim if provided
+                if (!string.IsNullOrWhiteSpace(QuickRegisterInput.Nickname))
+                {
+                    await _userManager.AddClaimAsync(user, new Claim("nickname", QuickRegisterInput.Nickname));
+                }
+
                 // Auto-login the new user
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 

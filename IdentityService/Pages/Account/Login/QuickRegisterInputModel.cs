@@ -12,6 +12,9 @@ public class QuickRegisterInputModel
     [Display(Name = "E-mail (opcionális)")]
     public string? Email { get; set; }
 
+    [Display(Name = "Becenév")]
+    public string? Nickname { get; set; }
+
     public string? ReturnUrl { get; set; }
     public string? Button { get; set; }
 }
