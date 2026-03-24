@@ -103,18 +103,13 @@
                             <input type="hidden" asp-for="QuickRegisterInput.ReturnUrl" />
 
                             <div class="form-group">
-                                <label asp-for="QuickRegisterInput.Name"></label>
-                                <input class="form-control" placeholder="Név" asp-for="QuickRegisterInput.Name">
-                            </div>
-                            
-                            <div class="form-group">
                                 <label asp-for="QuickRegisterInput.Email"></label>
                                 <input class="form-control" placeholder="E-mail (opcionális)" asp-for="QuickRegisterInput.Email">
                             </div>
                             
                             <div class="form-group">
                                 <label asp-for="QuickRegisterInput.Nickname"></label>
-                                <input class="form-control" placeholder="Becenév (opcionális)" asp-for="QuickRegisterInput.Nickname">
+                                <input class="form-control" placeholder="Becenév" asp-for="QuickRegisterInput.Nickname">
                             </div>
                             
                             <button class="btn btn-primary" name="QuickRegisterInput.Button" value="quickregister" autofocus>Regisztráció</button>

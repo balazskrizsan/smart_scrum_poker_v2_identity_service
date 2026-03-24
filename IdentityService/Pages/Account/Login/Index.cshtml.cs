@@ -222,6 +222,13 @@ public class Index : PageModel
     {
         // Clear ModelState and only validate QuickRegisterInput
         ModelState.Clear();
+        
+        // Generate name if not provided
+        if (string.IsNullOrWhiteSpace(QuickRegisterInput.Name))
+        {
+            QuickRegisterInput.Name = GenerateNicknameWithTimestamp(QuickRegisterInput.Nickname);
+        }
+        
         if (TryValidateModel(QuickRegisterInput))
         {
             // Generate random password
@@ -384,5 +391,21 @@ public class Index : PageModel
         }
         
         return new string(password);
+    }
+
+    private static string GenerateNicknameWithTimestamp(string? nickname)
+    {
+        // If no nickname provided, generate a random one
+        if (string.IsNullOrWhiteSpace(nickname))
+        {
+            var nicknames = new[] { "Vendeg", "User", "Jatekos", "Tag", "Felhasznalo", "Latogato" };
+            var random = new Random();
+            nickname = nicknames[random.Next(nicknames.Length)];
+        }
+        
+        var now = DateTime.Now;
+        var timestamp = now.ToString("yyyyMMdd_HHmmss");
+        
+        return $"{nickname}_{timestamp}";
     }
 }
