@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Security.Claims;
 
 namespace IdentityService.Pages.Register;
 
@@ -54,9 +55,12 @@ public class Index : PageModel
 
         if (ModelState.IsValid)
         {
+            // Generate username from nickname
+            var generatedUsername = GenerateNicknameWithTimestamp(Input.Nickname);
+            
             var user = new IdentityUser
             {
-                UserName = Input.Username,
+                UserName = generatedUsername,
                 Email = Input.Email
             };
 
@@ -64,6 +68,12 @@ public class Index : PageModel
 
             if (result.Succeeded)
             {
+                // Add nickname claim
+                if (!string.IsNullOrWhiteSpace(Input.Nickname))
+                {
+                    await _userManager.AddClaimAsync(user, new Claim("nickname", Input.Nickname));
+                }
+                
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: null));
                 Telemetry.Metrics.UserLogin(null, IdentityServerConstants.LocalIdentityProvider);
@@ -91,5 +101,21 @@ public class Index : PageModel
 
         // If we got this far, something failed, redisplay form
         return Page();
+    }
+    
+    private static string GenerateNicknameWithTimestamp(string? nickname)
+    {
+        // If no nickname provided, generate a random one
+        if (string.IsNullOrWhiteSpace(nickname))
+        {
+            var nicknames = new[] { "Vendeg", "User", "Jatekos", "Tag", "Felhasznalo", "Latogato" };
+            var random = new Random();
+            nickname = nicknames[random.Next(nicknames.Length)];
+        }
+        
+        var now = DateTime.Now;
+        var timestamp = now.ToString("yyyyMMdd_HHmmss");
+        
+        return $"{nickname}_{timestamp}";
     }
 }

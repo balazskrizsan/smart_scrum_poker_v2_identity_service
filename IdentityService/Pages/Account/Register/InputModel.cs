@@ -5,8 +5,8 @@ namespace IdentityService.Pages.Register;
 public class InputModel
 {
     [Required]
-    [Display(Name = "Username")]
-    public string? Username { get; set; }
+    [Display(Name = "Nickname")]
+    public string? Nickname { get; set; }
 
     [Required]
     [EmailAddress]
