@@ -45,13 +45,10 @@ builder.Services.AddIdentityServer(options =>
     options.Events.RaiseFailureEvents = true;
     options.Events.RaiseSuccessEvents = true;
 }).AddAspNetIdentity<IdentityUser>()
-.AddConfigurationStore(options =>
-{
-    options.ConfigureDbContext = db => db.UseNpgsql(connectionString, opt =>
-    {
-        opt.MigrationsAssembly(migrationsAssembly);
-    });
-}).AddOperationalStore(options =>
+    .AddInMemoryIdentityResources(Config.IdentityResources)
+    .AddInMemoryApiScopes(Config.ApiScopes)
+    .AddInMemoryClients(Config.Clients)
+    .AddOperationalStore(options =>
 {
     options.ConfigureDbContext = db => db.UseNpgsql(connectionString, opt =>
     {

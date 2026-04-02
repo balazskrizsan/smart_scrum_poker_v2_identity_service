@@ -14,7 +14,7 @@ public static class Config
     public static IEnumerable<ApiScope> ApiScopes =>
     [
         new("scope1"),
-        new("scope2")
+        new("poker.start")
     ];
 
     public static IEnumerable<Client> Clients =>
@@ -23,7 +23,6 @@ public static class Config
         {
             ClientId = "smart_scrum_poker_frontend",
             RequireClientSecret = false,
-            // ClientSecrets = { new Secret("49C1A7E1-0C79-4A89-A3D6-A37998FB86B0".Sha256()) },
 
             AllowedGrantTypes = GrantTypes.Code,
 
@@ -33,7 +32,7 @@ public static class Config
             // PostLogoutRedirectUris = { "https://localhost:44300/signout-callback-oidc" },
 
             AllowOfflineAccess = true,
-            AllowedScopes = { "openid", "profile", "nickname" }
+            AllowedScopes = { "openid", "profile", "nickname", "poker.start" }
         }
     ];
 }
