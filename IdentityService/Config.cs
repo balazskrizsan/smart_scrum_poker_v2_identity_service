@@ -25,6 +25,9 @@ public static class Config
             RequireClientSecret = false,
 
             AllowedGrantTypes = GrantTypes.Code,
+            AccessTokenLifetime = 3600, // 1 hour
+            AbsoluteRefreshTokenLifetime = 2592000, // 30 days
+            SlidingRefreshTokenLifetime = 1296000, // 15 days
 
             RedirectUris = { "https://localhost.balazskrizsan.com:3010/auth-callback" },
             AllowedCorsOrigins = { "https://localhost.balazskrizsan.com:3010" },
