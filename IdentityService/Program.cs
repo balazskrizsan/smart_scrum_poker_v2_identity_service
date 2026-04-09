@@ -17,6 +17,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 var migrationsAssembly = typeof(Config).Assembly.GetName().Name;
 
 builder.Services.AddRazorPages();
+builder.Services.AddControllers();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("user.info.read", policy => policy.RequireClaim("scope", "user.info.read"));
+});
 
 builder.Host.UseSerilog((context, lc) => {
     lc.MinimumLevel.Debug()
@@ -46,6 +52,7 @@ builder.Services.AddIdentityServer(options =>
     options.Events.RaiseSuccessEvents = true;
 }).AddAspNetIdentity<IdentityUser>()
     .AddInMemoryIdentityResources(Config.IdentityResources)
+    .AddInMemoryApiResources(Config.ApiResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
     .AddInMemoryClients(Config.Clients)
     .AddOperationalStore(options =>
@@ -62,6 +69,7 @@ app.UseIdentityServer();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
+app.MapControllers();
 app.MapRazorPages().RequireAuthorization();
 
 if (args.Contains("/seed"))

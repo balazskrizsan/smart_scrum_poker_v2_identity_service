@@ -1,0 +1,18 @@
+### Request and store token
+
+POST https://localhost:4040/connect/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id=smart_scrum_poker_ids&client_secret=smart_scrum_poker_ids&grant_type=client_credentials&scope=user.info.read
+
+> {% client.global.set("token", response.body.access_token); %}
+
+### Call user info
+
+POST https://localhost:4040/api/userinfo/batch
+Authorization: Bearer {{$auth.token("smart_scrum_poker_ids")}}
+Content-Type: application/json
+
+{
+    "userIds": ["1570b4cd-bbf6-4941-8bd0-7db8ffeaedc8"]
+}

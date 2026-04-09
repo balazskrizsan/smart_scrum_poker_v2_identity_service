@@ -13,8 +13,16 @@ public static class Config
 
     public static IEnumerable<ApiScope> ApiScopes =>
     [
-        new("scope1"),
-        new("poker.start")
+        new("poker.start"),
+        new("user.info.read"),
+    ];
+
+    public static IEnumerable<ApiResource> ApiResources =>
+    [
+        new("userinfo.api", "User Info API")
+        {
+            Scopes = { "user.info.read" }
+        }
     ];
 
     public static IEnumerable<Client> Clients =>
@@ -36,6 +44,14 @@ public static class Config
 
             AllowOfflineAccess = true,
             AllowedScopes = { "openid", "profile", "nickname", "poker.start" }
+        },
+        new()
+        {
+            ClientId = "smart_scrum_poker_ids",
+            ClientSecrets = { new Secret("smart_scrum_poker_ids".Sha256()) },
+            AllowedGrantTypes = GrantTypes.ClientCredentials,
+            AccessTokenLifetime = 3600,
+            AllowedScopes = { "user.info.read" }
         }
     ];
 }
