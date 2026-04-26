@@ -1,9 +1,11 @@
+using System.Diagnostics;
+using System.Security.Claims;
 using Duende.IdentityServer;
 using Duende.IdentityServer.Events;
 using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Services;
 using Duende.IdentityServer.Stores;
-using Duende.IdentityServer.Test;
+using IdentityService.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -11,7 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
-using System.Security.Claims;
 
 namespace IdentityService.Pages.Login;
 
@@ -25,6 +26,7 @@ public class Index : PageModel
     private readonly IAuthenticationSchemeProvider _schemeProvider;
     private readonly IIdentityProviderStore _identityProviderStore;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserInputValidationService _validationService;
 
     public ViewModel View { get; set; } = default!;
 
@@ -40,7 +42,8 @@ public class Index : PageModel
         IIdentityProviderStore identityProviderStore,
         IEventService events, 
         SignInManager<IdentityUser> signInManager,
-        UserManager<IdentityUser> userManager)
+        UserManager<IdentityUser> userManager,
+        UserInputValidationService validationService)
     {
 
         _interaction = interaction;
@@ -49,6 +52,7 @@ public class Index : PageModel
         _events = events;
         _signInManager = signInManager;
         _userManager = userManager;
+        _validationService = validationService;
     }
 
     public async Task<IActionResult> OnGet(string? returnUrl)
@@ -80,51 +84,30 @@ public class Index : PageModel
             return await HandleLocalLoginAsync(context);
         }
 
-        // // the user clicked the "cancel" button
-        // if (Input.Button != "login")
-        // {
-        //     if (context != null)
-        //     {
-        //         // This "can't happen", because if the ReturnUrl was null, then the context would be null
-        //         ArgumentNullException.ThrowIfNull(Input.ReturnUrl, nameof(Input.ReturnUrl));
-        //
-        //         // if the user cancels, send a result back into IdentityService as if they 
-        //         // denied the consent (even if this client does not require consent).
-        //         // this will send back an access denied OIDC error response to the client.
-        //         await _interaction.DenyAuthorizationAsync(context, AuthorizationError.AccessDenied);
-        //
-        //         // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
-        //         if (context.IsNativeClient())
-        //         {
-        //             // The client is native, so this change in how to
-        //             // return the response is for better UX for the end user.
-        //             return this.LoadingPage(Input.ReturnUrl);
-        //         }
-        //
-        //         return Redirect(Input.ReturnUrl ?? "~/");
-        //     }
-        //     else
-        //     {
-        //         // since we don't have a valid context, then we just go back to the home page
-        //         return Redirect("~/");
-        //     }
-        // }
-
         // something went wrong, show form with error
         await BuildModelAsync(Input.ReturnUrl);
         return Page();
     }
 
-    private async Task<IActionResult> HandleLocalLoginAsync(Duende.IdentityServer.Models.AuthorizationRequest? context)
+    private async Task<IActionResult> HandleLocalLoginAsync(AuthorizationRequest? context)
     {
+        // Validate input using the validation service
+        var validationResult = _validationService.ValidateLocalAccountInput(Input, ModelState);
+        
+        if (!validationResult.IsValid)
+        {
+            await BuildModelAsync(Input.ReturnUrl);
+            return Page();
+        }
+
         // Debug: Log the input email
         var inputEmail = Input.Email?.Trim();
-        System.Diagnostics.Debug.WriteLine($"Looking for user with email: '{inputEmail}'");
+        Debug.WriteLine($"Looking for user with email: '{inputEmail}'");
         
         var user = await _signInManager.UserManager.FindByEmailAsync(inputEmail);
         
         // Debug: Log if user was found
-        System.Diagnostics.Debug.WriteLine($"User found: {user != null}");
+        Debug.WriteLine($"User found: {user != null}");
         
         // If user not found, try alternative lookup methods
         if (user == null)
@@ -132,23 +115,23 @@ public class Index : PageModel
             // Try case-insensitive search by normalized email
             var normalizedEmail = _userManager.NormalizeEmail(inputEmail);
             user = await _userManager.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
-            System.Diagnostics.Debug.WriteLine($"User found by normalized email: {user != null}");
+            Debug.WriteLine($"User found by normalized email: {user != null}");
             
             // If still not found, try case-insensitive search by regular email
             if (user == null)
             {
                 user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == inputEmail.ToLower());
-                System.Diagnostics.Debug.WriteLine($"User found by case-insensitive email: {user != null}");
+                Debug.WriteLine($"User found by case-insensitive email: {user != null}");
             }
             
             // Debug: List all users if still not found
             if (user == null)
             {
                 var allUsers = await _userManager.Users.ToListAsync();
-                System.Diagnostics.Debug.WriteLine($"Total users in DB: {allUsers.Count}");
+                Debug.WriteLine($"Total users in DB: {allUsers.Count}");
                 foreach (var u in allUsers)
                 {
-                    System.Diagnostics.Debug.WriteLine($"User: {u.UserName}, Email: '{u.Email}', NormalizedEmail: '{u.NormalizedEmail}'");
+                    Debug.WriteLine($"User: {u.UserName}, Email: '{u.Email}', NormalizedEmail: '{u.NormalizedEmail}'");
                 }
             }
         }
@@ -218,84 +201,87 @@ public class Index : PageModel
         return Page();
     }
 
-    private async Task<IActionResult> HandleQuickRegisterAsync(Duende.IdentityServer.Models.AuthorizationRequest? context)
+    private async Task<IActionResult> HandleQuickRegisterAsync(AuthorizationRequest? context)
     {
-        // Clear ModelState and only validate QuickRegisterInput
-        ModelState.Clear();
-        
         // Generate name if not provided
         if (string.IsNullOrWhiteSpace(QuickRegisterInput.Name))
         {
             QuickRegisterInput.Name = GenerateNicknameWithTimestamp(QuickRegisterInput.Nickname);
         }
         
-        if (TryValidateModel(QuickRegisterInput))
+        // Validate input using the validation service
+        var validationResult = _validationService.ValidateQuickRegisterInput(QuickRegisterInput, ModelState);
+        
+        if (!validationResult.IsValid)
         {
-            // Generate random password
-            var randomPassword = GenerateRandomPassword();
-            
-            // Create new user with random password
-            var user = new IdentityUser
+            await BuildModelAsync(QuickRegisterInput.ReturnUrl);
+            return Page();
+        }
+
+        // Generate random password
+        var randomPassword = GenerateRandomPassword();
+        
+        // Create new user with random password
+        var user = new IdentityUser
+        {
+            UserName = QuickRegisterInput.Name,
+            Email = QuickRegisterInput.Email,
+            EmailConfirmed = false
+        };
+
+        var result = await _userManager.CreateAsync(user, randomPassword);
+        
+        if (result.Succeeded)
+        {
+            // Add nickname claim if provided
+            if (!string.IsNullOrWhiteSpace(QuickRegisterInput.Nickname))
             {
-                UserName = QuickRegisterInput.Name,
-                Email = QuickRegisterInput.Email,
-                EmailConfirmed = false
+                await _userManager.AddClaimAsync(user, new Claim("nickname", QuickRegisterInput.Nickname));
+            }
+
+            // Auto-login the new user
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            
+            await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: context?.Client.ClientId));
+            Telemetry.Metrics.UserLogin(context?.Client.ClientId, IdentityServerConstants.LocalIdentityProvider);
+
+            // Create authentication cookie
+            var isuser = new IdentityServerUser(user.Id)
+            {
+                DisplayName = user.UserName
             };
 
-            var result = await _userManager.CreateAsync(user, randomPassword);
-            
-            if (result.Succeeded)
+            await HttpContext.SignInAsync(isuser);
+
+            if (context != null)
             {
-                // Add nickname claim if provided
-                if (!string.IsNullOrWhiteSpace(QuickRegisterInput.Nickname))
+                ArgumentNullException.ThrowIfNull(QuickRegisterInput.ReturnUrl, nameof(QuickRegisterInput.ReturnUrl));
+
+                if (context.IsNativeClient())
                 {
-                    await _userManager.AddClaimAsync(user, new Claim("nickname", QuickRegisterInput.Nickname));
+                    return this.LoadingPage(QuickRegisterInput.ReturnUrl);
                 }
 
-                // Auto-login the new user
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                
-                await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: context?.Client.ClientId));
-                Telemetry.Metrics.UserLogin(context?.Client.ClientId, IdentityServerConstants.LocalIdentityProvider);
-
-                // Create authentication cookie
-                var isuser = new IdentityServerUser(user.Id)
-                {
-                    DisplayName = user.UserName
-                };
-
-                await HttpContext.SignInAsync(isuser);
-
-                if (context != null)
-                {
-                    ArgumentNullException.ThrowIfNull(QuickRegisterInput.ReturnUrl, nameof(QuickRegisterInput.ReturnUrl));
-
-                    if (context.IsNativeClient())
-                    {
-                        return this.LoadingPage(QuickRegisterInput.ReturnUrl);
-                    }
-
-                    return Redirect(QuickRegisterInput.ReturnUrl ?? "~/");
-                }
-
-                if (Url.IsLocalUrl(QuickRegisterInput.ReturnUrl))
-                {
-                    return Redirect(QuickRegisterInput.ReturnUrl);
-                }
-                else if (string.IsNullOrEmpty(QuickRegisterInput.ReturnUrl))
-                {
-                    return Redirect("~/");
-                }
-                else
-                {
-                    throw new ArgumentException("invalid return URL");
-                }
+                return Redirect(QuickRegisterInput.ReturnUrl ?? "~/");
             }
 
-            foreach (var error in result.Errors)
+            if (Url.IsLocalUrl(QuickRegisterInput.ReturnUrl))
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                return Redirect(QuickRegisterInput.ReturnUrl);
             }
+            else if (string.IsNullOrEmpty(QuickRegisterInput.ReturnUrl))
+            {
+                return Redirect("~/");
+            }
+            else
+            {
+                throw new ArgumentException("invalid return URL");
+            }
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
         }
 
         // If we got here, something failed, redisplay form
@@ -321,7 +307,7 @@ public class Index : PageModel
             var scheme = await _schemeProvider.GetSchemeAsync(context.IdP);
             if (scheme != null)
             {
-                var local = context.IdP == Duende.IdentityServer.IdentityServerConstants.LocalIdentityProvider;
+                var local = context.IdP == IdentityServerConstants.LocalIdentityProvider;
 
                 // this is meant to short circuit the UI and only trigger the one external IdP
                 View = new ViewModel
@@ -393,19 +379,11 @@ public class Index : PageModel
         return new string(password);
     }
 
-    private static string GenerateNicknameWithTimestamp(string? nickname)
+    private static string GenerateNicknameWithTimestamp(string nickname)
     {
-        // If no nickname provided, generate a random one
-        if (string.IsNullOrWhiteSpace(nickname))
-        {
-            var nicknames = new[] { "Vendeg", "User", "Jatekos", "Tag", "Felhasznalo", "Latogato" };
-            var random = new Random();
-            nickname = nicknames[random.Next(nicknames.Length)];
-        }
-        
         var now = DateTime.Now;
         var timestamp = now.ToString("yyyyMMdd_HHmmss");
-        
+
         return $"{nickname}_{timestamp}";
     }
 }

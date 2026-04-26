@@ -1,5 +1,6 @@
 using IdentityService;
 using IdentityService.Database;
+using IdentityService.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -43,6 +44,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddScoped<UserInputValidationService>();
 
 builder.Services.AddIdentityServer(options =>
 {
