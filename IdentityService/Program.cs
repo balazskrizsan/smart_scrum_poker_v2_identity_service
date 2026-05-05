@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using IdentityService;
 using IdentityService.Database;
 using IdentityService.Services;
@@ -25,14 +26,16 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("user.info.read", policy => policy.RequireClaim("scope", "user.info.read"));
 });
 
-builder.Host.UseSerilog((context, lc) => {
+builder.Host.UseSerilog((context, lc) =>
+{
     lc.MinimumLevel.Debug()
         .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
         .MinimumLevel.Override("Microsoft.HostingLifeti,e", LogEventLevel.Information)
         .MinimumLevel.Override("Microsoft.AspNetCore.Authentication", LogEventLevel.Information)
         .MinimumLevel.Override("System", LogEventLevel.Warning)
         .WriteTo.Console(
-            outputTemplate:"[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}", 
+            outputTemplate:
+            "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}",
             theme: AnsiConsoleTheme.Code)
         .Enrich.FromLogContext();
 });
@@ -48,25 +51,41 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 builder.Services.AddScoped<UserInputValidationService>();
 
 builder.Services.AddIdentityServer(options =>
-{
-    options.Events.RaiseErrorEvents = true;
-    options.Events.RaiseInformationEvents = true;
-    options.Events.RaiseFailureEvents = true;
-    options.Events.RaiseSuccessEvents = true;
-}).AddAspNetIdentity<IdentityUser>()
+    {
+        options.Events.RaiseErrorEvents = true;
+        options.Events.RaiseInformationEvents = true;
+        options.Events.RaiseFailureEvents = true;
+        options.Events.RaiseSuccessEvents = true;
+        options.IssuerUri = "https://localhost.balazskrizsan.com:4040";
+    }).AddAspNetIdentity<IdentityUser>()
     .AddInMemoryIdentityResources(Config.IdentityResources)
     .AddInMemoryApiResources(Config.ApiResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
     .AddInMemoryClients(Config.Clients)
     .AddOperationalStore(options =>
-{
-    options.ConfigureDbContext = db => db.UseNpgsql(connectionString, opt =>
     {
-        opt.MigrationsAssembly(migrationsAssembly);
+        options.ConfigureDbContext = db =>
+            db.UseNpgsql(connectionString, opt => { opt.MigrationsAssembly(migrationsAssembly); });
+    });
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(4040, listenOptions =>
+    {
+        try
+        {
+            listenOptions.UseHttps(new X509Certificate2("keystore/certificate.pfx", "password"));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Certificate error: {ex.Message}");
+        }
     });
 });
 
 var app = builder.Build();
+
+app.UseHttpsRedirection();
 app.UseIdentityServer();
 
 app.UseStaticFiles();
