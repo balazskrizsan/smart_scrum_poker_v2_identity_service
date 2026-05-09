@@ -44,12 +44,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(connectionString, sqlOptions => sqlOptions.MigrationsAssembly(migrationsAssembly));
 });
-
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
-
 builder.Services.AddScoped<UserInputValidationService>();
-
+builder.Services.AddScoped<QuicRegisterService>();
+builder.Services.AddScoped<TokenGeneratorService>();
 builder.Services.AddIdentityServer(options =>
     {
         options.Events.RaiseErrorEvents = true;
@@ -57,7 +56,9 @@ builder.Services.AddIdentityServer(options =>
         options.Events.RaiseFailureEvents = true;
         options.Events.RaiseSuccessEvents = true;
         options.IssuerUri = "https://localhost.balazskrizsan.com:4040";
-    }).AddAspNetIdentity<IdentityUser>()
+        options.EmitStaticAudienceClaim = false;
+    })
+    .AddAspNetIdentity<IdentityUser>()
     .AddInMemoryIdentityResources(Config.IdentityResources)
     .AddInMemoryApiResources(Config.ApiResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
@@ -85,6 +86,7 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseIdentityServer();
 

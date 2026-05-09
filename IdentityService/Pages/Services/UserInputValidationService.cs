@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mail;
 using IdentityService.Pages.Login;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -90,6 +91,25 @@ public class UserInputValidationService
         }
 
         return result;
+    }
+
+    public static bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return false;
+        }
+
+        try
+        {
+            var addr = new MailAddress(email);
+
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
 
