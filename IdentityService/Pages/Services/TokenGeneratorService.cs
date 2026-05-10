@@ -6,7 +6,10 @@ using Duende.IdentityServer.Validation;
 
 namespace IdentityService.Services;
 
-public class TokenGeneratorService(ITokenService tokenService, IClientStore clientStore, IConfiguration configuration)
+public class TokenGeneratorService(
+    ITokenService tokenService,
+    IClientStore clientStore
+)
 {
     public async Task<string> GenerateClientCredentialsTokenAsync(string clientId, string scope)
     {

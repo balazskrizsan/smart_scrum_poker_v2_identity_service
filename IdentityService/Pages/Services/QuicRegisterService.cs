@@ -3,17 +3,8 @@ using Microsoft.AspNetCore.Identity;
 
 namespace IdentityService.Services
 {
-    public class QuicRegisterService
+    public class QuicRegisterService(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
-
-        public QuicRegisterService(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
-
         public async Task<(IdentityUser? user, IdentityResult result)> CreateQuickUserAsync(string name, string email, string? nickname)
         {
             var randomPassword = GenerateRandomPassword();
@@ -25,18 +16,16 @@ namespace IdentityService.Services
                 EmailConfirmed = false
             };
 
-            var result = await _userManager.CreateAsync(user, randomPassword);
+            var result = await userManager.CreateAsync(user, randomPassword);
 
             if (result.Succeeded)
             {
-                // Add nickname claim if provided
                 if (!string.IsNullOrWhiteSpace(nickname))
                 {
-                    await _userManager.AddClaimAsync(user, new Claim("nickname", nickname));
+                    await userManager.AddClaimAsync(user, new Claim("nickname", nickname));
                 }
 
-                // Auto-login the new user
-                await _signInManager.SignInAsync(user, isPersistent: false);
+                await signInManager.SignInAsync(user, isPersistent: false);
             }
 
             return (user, result);
