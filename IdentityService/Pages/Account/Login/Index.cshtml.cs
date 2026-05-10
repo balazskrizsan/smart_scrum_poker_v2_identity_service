@@ -26,7 +26,7 @@ public class Index(
     UserManager<IdentityUser> userManager,
     UserInputValidationService validationService,
     QuicRegisterService quicRegisterService,
-    TokenGeneratorService tokenGeneratorService
+    AwsSesService awsSesService
 )
     : PageModel
 {
@@ -210,11 +210,6 @@ public class Index(
 
         if (result.Succeeded)
         {
-            // Generate token
-            var token = await tokenGeneratorService.GenerateClientCredentialsTokenAsync("smart_scrum_poker_aws", "aws.ses");
-            Console.WriteLine("================================================");
-            Console.WriteLine(token);
-
             await events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName,
                 clientId: context?.Client.ClientId));
             Telemetry.Metrics.UserLogin(context?.Client.ClientId, IdentityServerConstants.LocalIdentityProvider);
@@ -226,6 +221,13 @@ public class Index(
             };
 
             await HttpContext.SignInAsync(isuser);
+            await awsSesService.SendEmailAsync(new AwsSesService.EmailRequest
+            {
+                To = "krizsan.balazs@gmail.com",
+                Subject = "New user created",
+                Text = "Text: New user: " + user,
+                Html = "Html: New user: " + user,
+            });
 
             if (context != null)
             {
