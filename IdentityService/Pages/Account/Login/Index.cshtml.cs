@@ -224,7 +224,11 @@ public class Index(
             await HttpContext.SignInAsync(isuser);
             var quickRegFinish = await tokenGeneratorService.GenerateClientCredentialsTokenAsync(
                 "smart_scrum_poker_ids_quick_register_finish",
-                "user.quick_register.finish"
+                "user.quick_register.finish",
+                new Dictionary<string, string>()
+                {
+                    { "user_email", user.Email },
+                }
             );
             await awsSesService.SendEmailAsync(new AwsSesService.EmailRequest
             {

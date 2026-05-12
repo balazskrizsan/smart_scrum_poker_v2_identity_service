@@ -11,7 +11,7 @@ public class TokenGeneratorService(
     IClientStore clientStore
 )
 {
-    public async Task<string> GenerateClientCredentialsTokenAsync(string clientId, string scope)
+    public async Task<string> GenerateClientCredentialsTokenAsync(string clientId, string scope, Dictionary<string, string> additionalClaims = null)
     {
         var client = await clientStore.FindEnabledClientByIdAsync(clientId);
         if (client == null)
@@ -19,6 +19,23 @@ public class TokenGeneratorService(
 
         var now = DateTime.UtcNow;
         var issuer = "https://localhost.balazskrizsan.com:4040";
+
+        var claims = new List<Claim>
+        {
+            new("sub", clientId),
+            new("client_id", clientId),
+            new("iss", issuer),
+            new("aud", issuer),
+            new("scope", scope)
+        };
+
+        if (additionalClaims != null)
+        {
+            foreach (var claim in additionalClaims)
+            {
+                claims.Add(new Claim(claim.Key, claim.Value));
+            }
+        }
 
         var tokenRequest = new TokenCreationRequest
         {
@@ -34,25 +51,25 @@ public class TokenGeneratorService(
             {
                 ClientId = clientId,
                 Client = client,
-                Subject = new ClaimsPrincipal(new ClaimsIdentity(new[]
-                {
-                    new Claim("sub", clientId),
-                    new Claim("client_id", clientId),
-                    new Claim("iss", issuer),
-                    new Claim("aud", issuer),
-                    new Claim("scope", scope)
-                }))
+                Subject = new ClaimsPrincipal(new ClaimsIdentity(claims))
             }
         };
 
         var token = await tokenService.CreateAccessTokenAsync(tokenRequest);
 
-        // Ensure proper timestamps
         token.CreationTime = now;
         token.Issuer = issuer;
         token.Audiences = new[] { issuer };
         token.Lifetime = client.AccessTokenLifetime;
         token.Claims.Add(new Claim("scope", scope));
+
+        if (additionalClaims != null)
+        {
+            foreach (var claim in additionalClaims)
+            {
+                token.Claims.Add(new Claim(claim.Key, claim.Value));
+            }
+        }
 
         return await tokenService.CreateSecurityTokenAsync(token);
     }
