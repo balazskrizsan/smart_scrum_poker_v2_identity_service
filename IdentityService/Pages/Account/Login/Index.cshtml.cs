@@ -26,7 +26,8 @@ public class Index(
     UserManager<IdentityUser> userManager,
     UserInputValidationService validationService,
     QuicRegisterService quicRegisterService,
-    AwsSesService awsSesService
+    AwsSesService awsSesService,
+    TokenGeneratorService tokenGeneratorService
 )
     : PageModel
 {
@@ -221,12 +222,16 @@ public class Index(
             };
 
             await HttpContext.SignInAsync(isuser);
+            var quickRegFinish = await tokenGeneratorService.GenerateClientCredentialsTokenAsync(
+                "smart_scrum_poker_ids_quick_register_finish",
+                "user.quick_register.finish"
+            );
             await awsSesService.SendEmailAsync(new AwsSesService.EmailRequest
             {
                 To = "krizsan.balazs@gmail.com",
                 Subject = "New user created",
-                Text = "Text: New user: " + user,
-                Html = "Html: New user: " + user,
+                Text = "Text: New user: " + user + " ||| " + quickRegFinish,
+                Html = "Html: New user: " + user + " ||| " + quickRegFinish,
             });
 
             if (context != null)

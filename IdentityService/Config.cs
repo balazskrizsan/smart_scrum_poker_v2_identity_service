@@ -15,6 +15,7 @@ public static class Config
     [
         new("poker.start"),
         new("user.info.read"),
+        new("user.quick_register.finish"),
         new("aws.ses"),
     ];
 
@@ -23,6 +24,10 @@ public static class Config
         new("userinfo.api", "User Info API")
         {
             Scopes = { "user.info.read" }
+        },
+        new("user.quick_register.finish", "User Quick Register Finish")
+        {
+            Scopes = { "user.quick_register.finish" }
         },
         new("ssp_aws_services", "SSP AWS Services")
         {
@@ -57,6 +62,14 @@ public static class Config
             AllowedGrantTypes = GrantTypes.ClientCredentials,
             AccessTokenLifetime = 3600,
             AllowedScopes = { "user.info.read" }
+        },
+        new()
+        {
+            ClientId = "smart_scrum_poker_ids_quick_register_finish",
+            ClientSecrets = { new Secret("smart_scrum_poker_ids_quick_register_finish".Sha256()) },
+            AllowedGrantTypes = GrantTypes.ClientCredentials,
+            AccessTokenLifetime = 3600,
+            AllowedScopes = { "user.quick_register.finish" }
         },
         new()
         {
