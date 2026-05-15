@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using IdentityServer.Services;
 using IdentityService;
 using IdentityService.Database;
 using IdentityService.Services;
@@ -50,6 +51,7 @@ builder.Services.AddScoped<UserInputValidationService>();
 builder.Services.AddScoped<QuicRegisterService>();
 builder.Services.AddScoped<TokenGeneratorService>();
 builder.Services.AddScoped<AwsSesService>();
+builder.Services.AddScoped<ITokenValidationService, TokenValidationService>();
 builder.Services.AddIdentityServer(options =>
     {
         options.Events.RaiseErrorEvents = true;

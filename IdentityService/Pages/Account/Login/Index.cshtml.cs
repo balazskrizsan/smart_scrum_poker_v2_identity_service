@@ -227,15 +227,20 @@ public class Index(
                 "user.quick_register.finish",
                 new Dictionary<string, string>()
                 {
+                    { "user_id", user.Id },
                     { "user_email", user.Email },
                 }
             );
+            var completeRegistrationUrl = $"https://localhost.balazskrizsan.com:4040/Account/QuickRegisterFinish?token={Uri.EscapeDataString(quickRegFinish)}";
             await awsSesService.SendEmailAsync(new AwsSesService.EmailRequest
             {
                 To = "krizsan.balazs@gmail.com",
                 Subject = "New user created",
                 Text = "Text: New user: " + user + " ||| " + quickRegFinish,
-                Html = "Html: New user: " + user + " ||| " + quickRegFinish,
+                Html = "Html: New user: "
+                       + user + " ||| "
+                       + quickRegFinish
+                       + " ||| <a href=\"" + completeRegistrationUrl + "\">Complete registration</a>",
             });
 
             if (context != null)

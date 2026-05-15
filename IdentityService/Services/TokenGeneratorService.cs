@@ -11,7 +11,7 @@ public class TokenGeneratorService(
     IClientStore clientStore
 )
 {
-    public async Task<string> GenerateClientCredentialsTokenAsync(string clientId, string scope, Dictionary<string, string> additionalClaims = null)
+    public async Task<string> GenerateClientCredentialsTokenAsync(string clientId, string scope, Dictionary<string, string>? additionalClaims = null)
     {
         var client = await clientStore.FindEnabledClientByIdAsync(clientId);
         if (client == null)
