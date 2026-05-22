@@ -18,6 +18,23 @@ namespace IdentityService.Services
             public string Html { get; set; }
         }
 
+        public class TemplatedEmailRequest
+        {
+            public string To { get; set; }
+            public string Subject { get; set; }
+            public string HtmlTemplate { get; set; }
+            public string TextTemplate { get; set; }
+            public Dictionary<string, string> TemplateVariables { get; set; }
+        }
+
+        public class TemplatedEmailByIdRequest
+        {
+            public string To { get; set; }
+            public string Subject { get; set; }
+            public string TemplateId { get; set; }
+            public Dictionary<string, string> TemplateVariables { get; set; }
+        }
+
         public class EmailResponse
         {
             public string MessageId { get; set; }
@@ -26,6 +43,21 @@ namespace IdentityService.Services
         }
 
         public async Task<EmailResponse> SendEmailAsync(EmailRequest request)
+        {
+            return await SendSesRequestAsync("/api/v1/ses/send", request);
+        }
+
+        public async Task<EmailResponse> SendTemplatedEmailAsync(TemplatedEmailRequest request)
+        {
+            return await SendSesRequestAsync("/api/v1/ses/send-templated", request);
+        }
+
+        public async Task<EmailResponse> SendTemplatedEmailByIdAsync(TemplatedEmailByIdRequest request)
+        {
+            return await SendSesRequestAsync("/api/v1/ses/send-templated-by-id", request);
+        }
+
+        private async Task<EmailResponse> SendSesRequestAsync<T>(string endpoint, T request)
         {
             try
             {
@@ -46,14 +78,7 @@ namespace IdentityService.Services
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                var jsonOptions = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-                var jsonContent = JsonSerializer.Serialize(request, jsonOptions);
-                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-                var response = await httpClient.PostAsync("https://localhost.balazskrizsan.com:8080/api/v1/ses/send", content);
+                var response = await DoPostAsync(endpoint, request);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -84,6 +109,26 @@ namespace IdentityService.Services
                     Success = false,
                     Error = ex.Message
                 };
+            }
+        }
+
+        private async Task<HttpResponseMessage> DoPostAsync<T>(string endpoint, T request)
+        {
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            var jsonContent = JsonSerializer.Serialize(request, jsonOptions);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            try
+            {
+                return await httpClient.PostAsync($"https://localhost.balazskrizsan.com:8080{endpoint}", content);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Exception occurred while sending email request to {Endpoint}", endpoint);
+                throw; // Rethrow the exception after logging it
             }
         }
     }
