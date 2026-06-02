@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Duende.IdentityServer.Extensions;
 using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Services;
 using Duende.IdentityServer.Stores;
@@ -8,7 +9,8 @@ namespace IdentityService.Services;
 
 public class TokenGeneratorService(
     ITokenService tokenService,
-    IClientStore clientStore
+    IClientStore clientStore,
+    ILogger<AwsSesService> logger
 )
 {
     public async Task<string> GenerateClientCredentialsTokenAsync(string clientId, string scope, Dictionary<string, string>? additionalClaims = null)
@@ -33,6 +35,12 @@ public class TokenGeneratorService(
         {
             foreach (var claim in additionalClaims)
             {
+                if (claim.Value.IsNullOrEmpty())
+                {
+                    logger.LogWarning("Claim value is null or empty: {ClaimKey}", claim.Key);
+
+                    continue;
+                }
                 claims.Add(new Claim(claim.Key, claim.Value));
             }
         }

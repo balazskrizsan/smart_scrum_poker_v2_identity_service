@@ -25,9 +25,7 @@ public class Index(
     SignInManager<IdentityUser> signInManager,
     UserManager<IdentityUser> userManager,
     UserInputValidationService validationService,
-    QuicRegisterService quicRegisterService,
-    AwsSesService awsSesService,
-    TokenGeneratorService tokenGeneratorService
+    QuicRegisterService quicRegisterService
 )
     : PageModel
 {
@@ -73,7 +71,6 @@ public class Index(
 
     private async Task<IActionResult> HandleLocalLoginAsync(AuthorizationRequest? context)
     {
-        // Validate input using the validation service
         var validationResult = validationService.ValidateLocalAccountInput(Input, ModelState);
 
         if (!validationResult.IsValid)
@@ -82,31 +79,24 @@ public class Index(
             return Page();
         }
 
-        // Debug: Log the input email
         var inputEmail = Input.Email?.Trim();
         Debug.WriteLine($"Looking for user with email: '{inputEmail}'");
 
-        var user = await signInManager.UserManager.FindByEmailAsync(inputEmail);
-
-        // Debug: Log if user was found
+        var user = await userManager.Users.FirstOrDefaultAsync(u => u.Email == inputEmail && u.EmailConfirmed);
         Debug.WriteLine($"User found: {user != null}");
 
-        // If user not found, try alternative lookup methods
         if (user == null)
         {
-            // Try case-insensitive search by normalized email
             var normalizedEmail = userManager.NormalizeEmail(inputEmail);
-            user = await userManager.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
+            user = await userManager.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail && u.EmailConfirmed);
             Debug.WriteLine($"User found by normalized email: {user != null}");
 
-            // If still not found, try case-insensitive search by regular email
             if (user == null)
             {
-                user = await userManager.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == inputEmail.ToLower());
+                user = await userManager.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == inputEmail.ToLower() && u.EmailConfirmed);
                 Debug.WriteLine($"User found by case-insensitive email: {user != null}");
             }
 
-            // Debug: List all users if still not found
             if (user == null)
             {
                 var allUsers = await userManager.Users.ToListAsync();
@@ -222,26 +212,7 @@ public class Index(
             };
 
             await HttpContext.SignInAsync(isuser);
-            var quickRegFinish = await tokenGeneratorService.GenerateClientCredentialsTokenAsync(
-                "smart_scrum_poker_ids_quick_register_finish",
-                "user.quick_register.finish",
-                new Dictionary<string, string>()
-                {
-                    { "user_id", user.Id },
-                    { "user_email", user.Email },
-                }
-            );
-            var completeRegistrationUrl = $"https://localhost.balazskrizsan.com:4040/Account/QuickRegisterFinish?token={Uri.EscapeDataString(quickRegFinish)}";
-            await awsSesService.SendEmailAsync(new AwsSesService.EmailRequest
-            {
-                To = "krizsan.balazs@gmail.com",
-                Subject = "New user created",
-                Text = "Text: New user: " + user + " ||| " + quickRegFinish,
-                Html = "Html: New user: "
-                       + user + " ||| "
-                       + quickRegFinish
-                       + " ||| <a href=\"" + completeRegistrationUrl + "\">Complete registration</a>",
-            });
+            await quicRegisterService.TrySendCompleteRegistrationToken(user);
 
             if (context != null)
             {
