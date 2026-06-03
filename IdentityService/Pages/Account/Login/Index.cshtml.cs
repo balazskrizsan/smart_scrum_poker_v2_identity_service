@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Duende.IdentityServer;
 using Duende.IdentityServer.Events;
 using Duende.IdentityServer.Models;
@@ -10,7 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace IdentityService.Pages.Login;
@@ -19,14 +17,12 @@ namespace IdentityService.Pages.Login;
 [AllowAnonymous]
 public class Index(
     IIdentityServerInteractionService interaction,
-    IAuthenticationSchemeProvider schemeProvider,
-    IIdentityProviderStore identityProviderStore,
     IEventService events,
     SignInManager<IdentityUser> signInManager,
-    UserManager<IdentityUser> userManager,
     UserInputValidationService validationService,
     QuicRegisterService quicRegisterService,
-    IExternalProviderService externalProviderService
+    ILoginModelBuilderService loginModelBuilderService,
+    IUserLookupService userLookupService
 )
     : PageModel
 {
@@ -38,7 +34,10 @@ public class Index(
 
     public async Task<IActionResult> OnGet(string? returnUrl)
     {
-        await BuildModelAsync(returnUrl);
+        var modelData = await loginModelBuilderService.BuildModelAsync(returnUrl);
+        Input = modelData.Input;
+        QuickRegisterInput = modelData.QuickRegisterInput;
+        View = modelData.View;
 
         if (View.IsExternalLoginOnly)
         {
@@ -66,7 +65,10 @@ public class Index(
         }
 
         // something went wrong, show form with error
-        await BuildModelAsync(Input.ReturnUrl);
+        var modelData = await loginModelBuilderService.BuildModelAsync(Input.ReturnUrl);
+        Input = modelData.Input;
+        QuickRegisterInput = modelData.QuickRegisterInput;
+        View = modelData.View;
         return Page();
     }
 
@@ -76,40 +78,14 @@ public class Index(
 
         if (!validationResult.IsValid)
         {
-            await BuildModelAsync(Input.ReturnUrl);
+            var modelData = await loginModelBuilderService.BuildModelAsync(Input.ReturnUrl);
+            Input = modelData.Input;
+            QuickRegisterInput = modelData.QuickRegisterInput;
+            View = modelData.View;
             return Page();
         }
 
-        var inputEmail = Input.Email?.Trim();
-        Debug.WriteLine($"Looking for user with email: '{inputEmail}'");
-
-        var user = await userManager.Users.FirstOrDefaultAsync(u => u.Email == inputEmail && u.EmailConfirmed);
-        Debug.WriteLine($"User found: {user != null}");
-
-        if (user == null)
-        {
-            var normalizedEmail = userManager.NormalizeEmail(inputEmail);
-            user = await userManager.Users.FirstOrDefaultAsync(u =>
-                u.NormalizedEmail == normalizedEmail && u.EmailConfirmed);
-            Debug.WriteLine($"User found by normalized email: {user != null}");
-
-            if (user == null)
-            {
-                user = await userManager.Users.FirstOrDefaultAsync(u =>
-                    u.Email.ToLower() == inputEmail.ToLower() && u.EmailConfirmed);
-                Debug.WriteLine($"User found by case-insensitive email: {user != null}");
-            }
-
-            if (user == null)
-            {
-                var allUsers = await userManager.Users.ToListAsync();
-                Debug.WriteLine($"Total users in DB: {allUsers.Count}");
-                foreach (var u in allUsers)
-                {
-                    Debug.WriteLine($"User: {u.UserName}, Email: '{u.Email}', NormalizedEmail: '{u.NormalizedEmail}'");
-                }
-            }
-        }
+        var user = await userLookupService.FindUserByEmailAsync(Input.Email);
 
         // validate username/password against in-memory store
         if (user != null && (await signInManager.CheckPasswordSignInAsync(user, Input.Password, false)) ==
@@ -157,15 +133,14 @@ public class Index(
             {
                 return Redirect(Input.ReturnUrl);
             }
-            else if (string.IsNullOrEmpty(Input.ReturnUrl))
+
+            if (string.IsNullOrEmpty(Input.ReturnUrl))
             {
                 return Redirect("~/");
             }
-            else
-            {
-                // user might have clicked on a malicious link - should be logged
-                throw new ArgumentException("invalid return URL");
-            }
+
+            // user might have clicked on a malicious link - should be logged
+            throw new ArgumentException("invalid return URL");
         }
 
         const string error = "invalid credentials";
@@ -175,7 +150,11 @@ public class Index(
         ModelState.AddModelError(string.Empty, LoginOptions.InvalidCredentialsErrorMessage);
 
         // something went wrong, show form with error
-        await BuildModelAsync(Input.ReturnUrl);
+        var errorModelData = await loginModelBuilderService.BuildModelAsync(Input.ReturnUrl);
+        Input = errorModelData.Input;
+        QuickRegisterInput = errorModelData.QuickRegisterInput;
+        View = errorModelData.View;
+
         return Page();
     }
 
@@ -184,7 +163,7 @@ public class Index(
         // Generate name if not provided
         if (string.IsNullOrWhiteSpace(QuickRegisterInput.Name))
         {
-            QuickRegisterInput.Name = GenerateNicknameWithTimestamp(QuickRegisterInput.Nickname);
+            QuickRegisterInput.Name = quicRegisterService.GenerateNicknameWithTimestamp(QuickRegisterInput.Nickname);
         }
 
         // Validate input using the validation service
@@ -192,7 +171,11 @@ public class Index(
 
         if (!validationResult.IsValid)
         {
-            await BuildModelAsync(QuickRegisterInput.ReturnUrl);
+            var modelData = await loginModelBuilderService.BuildModelAsync(QuickRegisterInput.ReturnUrl);
+            Input = modelData.Input;
+            QuickRegisterInput = modelData.QuickRegisterInput;
+            View = modelData.View;
+
             return Page();
         }
 
@@ -248,66 +231,11 @@ public class Index(
         }
 
         // If we got here, something failed, redisplay form
-        await BuildModelAsync(QuickRegisterInput.ReturnUrl);
+        var errorModelData = await loginModelBuilderService.BuildModelAsync(QuickRegisterInput.ReturnUrl);
+        Input = errorModelData.Input;
+        QuickRegisterInput = errorModelData.QuickRegisterInput;
+        View = errorModelData.View;
+
         return Page();
-    }
-
-    private async Task BuildModelAsync(string? returnUrl)
-    {
-        Input = new InputModel
-        {
-            ReturnUrl = returnUrl
-        };
-
-        QuickRegisterInput = new QuickRegisterInputModel
-        {
-            ReturnUrl = returnUrl
-        };
-
-        var context = await interaction.GetAuthorizationContextAsync(returnUrl);
-        if (context?.IdP != null)
-        {
-            var scheme = await schemeProvider.GetSchemeAsync(context.IdP);
-            if (scheme != null)
-            {
-                var local = context.IdP == IdentityServerConstants.LocalIdentityProvider;
-
-                // this is meant to short circuit the UI and only trigger the one external IdP
-                View = new ViewModel
-                {
-                    EnableLocalLogin = local,
-                };
-
-                Input.Email = context.LoginHint;
-
-                if (!local)
-                {
-                    View.ExternalProviders =
-                    [
-                        new ViewModel.ExternalProvider(authenticationScheme: context.IdP,
-                            displayName: scheme.DisplayName)
-                    ];
-                }
-            }
-
-            return;
-        }
-
-        var (providers, allowLocal) = await externalProviderService.GetFilteredProvidersAsync(context);
-
-        View = new ViewModel
-        {
-            AllowRememberLogin = LoginOptions.AllowRememberLogin,
-            EnableLocalLogin = allowLocal && LoginOptions.AllowLocalLogin,
-            ExternalProviders = providers.ToArray()
-        };
-    }
-
-    private static string GenerateNicknameWithTimestamp(string nickname)
-    {
-        var now = DateTime.Now;
-        var timestamp = now.ToString("yyyyMMdd_HHmmss");
-
-        return $"{nickname}_{timestamp}";
     }
 }
