@@ -2,6 +2,7 @@ using System.Security.Cryptography.X509Certificates;
 using IdentityServer.Services;
 using IdentityService;
 using IdentityService.Database;
+using IdentityService.Repositories;
 using IdentityService.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,8 @@ builder.Services.AddScoped<QuicRegisterService>();
 builder.Services.AddScoped<TokenGeneratorService>();
 builder.Services.AddScoped<AwsSesService>();
 builder.Services.AddScoped<ITokenValidationService, TokenValidationService>();
+builder.Services.AddScoped<IExternalProviderRepository, ExternalProviderRepository>();
+builder.Services.AddScoped<IExternalProviderService, ExternalProviderService>();
 builder.Services.AddIdentityServer(options =>
     {
         options.Events.RaiseErrorEvents = true;

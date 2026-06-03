@@ -25,7 +25,8 @@ public class Index(
     SignInManager<IdentityUser> signInManager,
     UserManager<IdentityUser> userManager,
     UserInputValidationService validationService,
-    QuicRegisterService quicRegisterService
+    QuicRegisterService quicRegisterService,
+    IExternalProviderService externalProviderService
 )
     : PageModel
 {
@@ -88,12 +89,14 @@ public class Index(
         if (user == null)
         {
             var normalizedEmail = userManager.NormalizeEmail(inputEmail);
-            user = await userManager.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail && u.EmailConfirmed);
+            user = await userManager.Users.FirstOrDefaultAsync(u =>
+                u.NormalizedEmail == normalizedEmail && u.EmailConfirmed);
             Debug.WriteLine($"User found by normalized email: {user != null}");
 
             if (user == null)
             {
-                user = await userManager.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == inputEmail.ToLower() && u.EmailConfirmed);
+                user = await userManager.Users.FirstOrDefaultAsync(u =>
+                    u.Email.ToLower() == inputEmail.ToLower() && u.EmailConfirmed);
                 Debug.WriteLine($"User found by case-insensitive email: {user != null}");
             }
 
@@ -201,11 +204,11 @@ public class Index(
 
         if (result.Succeeded)
         {
-            await events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName,
-                clientId: context?.Client.ClientId));
+            await events.RaiseAsync(
+                new UserLoginSuccessEvent("N/A", user.Id, "N/A", clientId: context?.Client.ClientId)
+            );
             Telemetry.Metrics.UserLogin(context?.Client.ClientId, IdentityServerConstants.LocalIdentityProvider);
 
-            // Create authentication cookie
             var isuser = new IdentityServerUser(user.Id)
             {
                 DisplayName = user.UserName
@@ -230,14 +233,13 @@ public class Index(
             {
                 return Redirect(QuickRegisterInput.ReturnUrl);
             }
-            else if (string.IsNullOrEmpty(QuickRegisterInput.ReturnUrl))
+
+            if (string.IsNullOrEmpty(QuickRegisterInput.ReturnUrl))
             {
                 return Redirect("~/");
             }
-            else
-            {
-                throw new ArgumentException("invalid return URL");
-            }
+
+            throw new ArgumentException("invalid return URL");
         }
 
         foreach (var error in result.Errors)
@@ -291,36 +293,7 @@ public class Index(
             return;
         }
 
-        var schemes = await schemeProvider.GetAllSchemesAsync();
-
-        var providers = schemes
-            .Where(x => x.DisplayName != null)
-            .Select(x => new ViewModel.ExternalProvider
-            (
-                authenticationScheme: x.Name,
-                displayName: x.DisplayName ?? x.Name
-            )).ToList();
-
-        var dynamicSchemes = (await identityProviderStore.GetAllSchemeNamesAsync())
-            .Where(x => x.Enabled)
-            .Select(x => new ViewModel.ExternalProvider
-            (
-                authenticationScheme: x.Scheme,
-                displayName: x.DisplayName ?? x.Scheme
-            ));
-        providers.AddRange(dynamicSchemes);
-
-        var allowLocal = true;
-        var client = context?.Client;
-        if (client != null)
-        {
-            allowLocal = client.EnableLocalLogin;
-            if (client.IdentityProviderRestrictions.Count != 0)
-            {
-                providers = providers.Where(provider =>
-                    client.IdentityProviderRestrictions.Contains(provider.AuthenticationScheme)).ToList();
-            }
-        }
+        var (providers, allowLocal) = await externalProviderService.GetFilteredProvidersAsync(context);
 
         View = new ViewModel
         {
