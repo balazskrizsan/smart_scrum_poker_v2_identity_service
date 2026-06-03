@@ -2,6 +2,7 @@ using Duende.IdentityServer;
 using Duende.IdentityServer.Events;
 using Duende.IdentityServer.Services;
 using IdentityServer.Services;
+using IdentityService.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,29 +12,17 @@ namespace IdentityService.Pages.Account.QuickRegisterFinish;
 
 [SecurityHeaders]
 [AllowAnonymous]
-public class Index : PageModel
+public class Index(
+    IEventService events,
+    UserManager<IdentityUser> userManager,
+    SignInManager<IdentityUser> signInManager,
+    ITokenValidationService tokenValidationService,
+    RegisterService registerService)
+    : PageModel
 {
-    private readonly UserManager<IdentityUser> _userManager;
-    private readonly SignInManager<IdentityUser> _signInManager;
-    private readonly IEventService _events;
-    private readonly ITokenValidationService _tokenValidationService;
-
     public ViewModel View { get; set; } = default!;
-        
-    [BindProperty]
-    public InputModel Input { get; set; } = default!;
-        
-    public Index(
-        IEventService events,
-        UserManager<IdentityUser> userManager,
-        SignInManager<IdentityUser> signInManager,
-        ITokenValidationService tokenValidationService)
-    {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _events = events;
-        _tokenValidationService = tokenValidationService;
-    }
+
+    [BindProperty] public InputModel Input { get; set; } = default!;
 
     public async Task<IActionResult> OnGet(string? token)
     {
@@ -59,7 +48,7 @@ public class Index : PageModel
 
         return Page();
     }
-        
+
     public async Task<IActionResult> OnPost()
     {
         if (ModelState.IsValid)
@@ -77,7 +66,7 @@ public class Index : PageModel
                 return Page();
             }
 
-            var user = await _userManager.FindByIdAsync(validationResult.UserId);
+            var user = await userManager.FindByIdAsync(validationResult.UserId);
             if (user == null)
             {
                 ModelState.AddModelError(string.Empty, "User not found");
@@ -90,12 +79,14 @@ public class Index : PageModel
                 return Page();
             }
 
-            await _userManager.RemovePasswordAsync(user);
-            var result = await _userManager.AddPasswordAsync(user, Input.Password!);
+            await userManager.RemovePasswordAsync(user);
+            var result = await userManager.AddPasswordAsync(user, Input.Password!);
             if (result.Succeeded)
             {
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: null));
+                await registerService.ConfirmEmailAsync(user);
+                await registerService.CleanupDuplicateUsersAsync(user);
+                await signInManager.SignInAsync(user, isPersistent: false);
+                await events.RaiseAsync(new UserLoginSuccessEvent("N/A", user.Id, "N/A", clientId: null));
                 Telemetry.Metrics.UserLogin(null, IdentityServerConstants.LocalIdentityProvider);
 
                 return Redirect("~/");
@@ -112,8 +103,8 @@ public class Index : PageModel
 
     private async Task<TokenValidationResult> ValidateTokenAsync(string token, string clientId)
     {
-        var validationResult = await _tokenValidationService.ValidateTokenAsync(token, clientId);
-        
+        var validationResult = await tokenValidationService.ValidateTokenAsync(token, clientId);
+
         if (!validationResult.IsValid)
         {
             return validationResult;

@@ -50,6 +50,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddScoped<UserInputValidationService>();
 builder.Services.AddScoped<QuicRegisterService>();
+builder.Services.AddScoped<RegisterService>();
 builder.Services.AddScoped<TokenGeneratorService>();
 builder.Services.AddScoped<AwsSesService>();
 builder.Services.AddScoped<ITokenValidationService, TokenValidationService>();
