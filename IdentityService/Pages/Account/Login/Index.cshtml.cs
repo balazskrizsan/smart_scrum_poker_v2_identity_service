@@ -2,7 +2,6 @@ using Duende.IdentityServer;
 using Duende.IdentityServer.Events;
 using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Services;
-using Duende.IdentityServer.Stores;
 using IdentityService.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -65,11 +64,7 @@ public class Index(
         }
 
         // something went wrong, show form with error
-        var modelData = await loginModelBuilderService.BuildModelAsync(Input.ReturnUrl);
-        Input = modelData.Input;
-        QuickRegisterInput = modelData.QuickRegisterInput;
-        View = modelData.View;
-        return Page();
+        return await BuildAndReturnPageAsync(Input.ReturnUrl);
     }
 
     private async Task<IActionResult> HandleLocalLoginAsync(AuthorizationRequest? context)
@@ -78,11 +73,7 @@ public class Index(
 
         if (!validationResult.IsValid)
         {
-            var modelData = await loginModelBuilderService.BuildModelAsync(Input.ReturnUrl);
-            Input = modelData.Input;
-            QuickRegisterInput = modelData.QuickRegisterInput;
-            View = modelData.View;
-            return Page();
+            return await BuildAndReturnPageAsync(Input.ReturnUrl);
         }
 
         var user = await userLookupService.FindUserByEmailAsync(Input.Email);
@@ -150,12 +141,7 @@ public class Index(
         ModelState.AddModelError(string.Empty, LoginOptions.InvalidCredentialsErrorMessage);
 
         // something went wrong, show form with error
-        var errorModelData = await loginModelBuilderService.BuildModelAsync(Input.ReturnUrl);
-        Input = errorModelData.Input;
-        QuickRegisterInput = errorModelData.QuickRegisterInput;
-        View = errorModelData.View;
-
-        return Page();
+        return await BuildAndReturnPageAsync(Input.ReturnUrl);
     }
 
     private async Task<IActionResult> HandleQuickRegisterAsync(AuthorizationRequest? context)
@@ -171,12 +157,7 @@ public class Index(
 
         if (!validationResult.IsValid)
         {
-            var modelData = await loginModelBuilderService.BuildModelAsync(QuickRegisterInput.ReturnUrl);
-            Input = modelData.Input;
-            QuickRegisterInput = modelData.QuickRegisterInput;
-            View = modelData.View;
-
-            return Page();
+            return await BuildAndReturnPageAsync(QuickRegisterInput.ReturnUrl);
         }
 
         // Create user using the quick register service
@@ -231,10 +212,15 @@ public class Index(
         }
 
         // If we got here, something failed, redisplay form
-        var errorModelData = await loginModelBuilderService.BuildModelAsync(QuickRegisterInput.ReturnUrl);
-        Input = errorModelData.Input;
-        QuickRegisterInput = errorModelData.QuickRegisterInput;
-        View = errorModelData.View;
+        return await BuildAndReturnPageAsync(QuickRegisterInput.ReturnUrl);
+    }
+
+    private async Task<IActionResult> BuildAndReturnPageAsync(string? returnUrl)
+    {
+        var modelData = await loginModelBuilderService.BuildModelAsync(returnUrl);
+        Input = modelData.Input;
+        QuickRegisterInput = modelData.QuickRegisterInput;
+        View = modelData.View;
 
         return Page();
     }

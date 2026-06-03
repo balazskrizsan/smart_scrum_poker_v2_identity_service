@@ -56,6 +56,7 @@ builder.Services.AddScoped<ITokenValidationService, TokenValidationService>();
 builder.Services.AddScoped<IExternalProviderRepository, ExternalProviderRepository>();
 builder.Services.AddScoped<IExternalProviderService, ExternalProviderService>();
 builder.Services.AddScoped<IUserLookupService, UserLookupService>();
+builder.Services.AddScoped<ILoginModelBuilderService, LoginModelBuilderService>();
 builder.Services.AddIdentityServer(options =>
     {
         options.Events.RaiseErrorEvents = true;
