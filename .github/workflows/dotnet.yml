@@ -42,8 +42,8 @@ jobs:
         pwd
         echo "===========> ls -hal:"
         ls -hal
-        echo "===========> ls -hal ./IDS:"
-        ls -hal ./IDS
+        echo "===========> ls -hal ./IdentityService:"
+        ls -hal ./IdentityService
 
     - name: Restore dependencies
       run: cd IdentityService && dotnet restore
