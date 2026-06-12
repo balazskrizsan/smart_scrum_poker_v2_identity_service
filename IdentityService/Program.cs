@@ -64,14 +64,14 @@ builder.Services.AddIdentityServer(options =>
         options.Events.RaiseInformationEvents = true;
         options.Events.RaiseFailureEvents = true;
         options.Events.RaiseSuccessEvents = true;
-        options.IssuerUri = "https://localhost.balazskrizsan.com:4040";
+        options.IssuerUri = builder.Configuration["IdentityServer:IssuerUri"];
         options.EmitStaticAudienceClaim = false;
     })
     .AddAspNetIdentity<IdentityUser>()
     .AddInMemoryIdentityResources(Config.IdentityResources)
     .AddInMemoryApiResources(Config.ApiResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
-    .AddInMemoryClients(Config.Clients)
+    .AddInMemoryClients(Config.Clients(builder.Configuration))
     .AddOperationalStore(options =>
     {
         options.ConfigureDbContext = db =>
@@ -80,11 +80,15 @@ builder.Services.AddIdentityServer(options =>
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(4040, listenOptions =>
+    var port = int.Parse(builder.Configuration["IdentityServer:Port"]);
+    var certPath = builder.Configuration["Certificate:Path"];
+    var certPassword = builder.Configuration["Certificate:Password"];
+    
+    options.ListenAnyIP(port, listenOptions =>
     {
         try
         {
-            listenOptions.UseHttps(new X509Certificate2("keystore/certificate.pfx", "password"));
+            listenOptions.UseHttps(new X509Certificate2(certPath, certPassword));
         }
         catch (Exception ex)
         {

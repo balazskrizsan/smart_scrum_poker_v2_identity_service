@@ -19,18 +19,19 @@ public class SeedData
             scope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
 
             var context = scope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
+            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
             context.Database.Migrate();
-            EnsureSeedData(context);
+            EnsureSeedData(context, configuration);
             EnsureUsers(scope);
         }
     }
 
-    private static void EnsureSeedData(ConfigurationDbContext context)
+    private static void EnsureSeedData(ConfigurationDbContext context, IConfiguration configuration)
     {
         if (!context.Clients.Any())
         {
             Log.Debug("Clients being populated");
-            foreach (var client in Config.Clients.ToList())
+            foreach (var client in Config.Clients(configuration).ToList())
             {
                 context.Clients.Add(client.ToEntity());
             }

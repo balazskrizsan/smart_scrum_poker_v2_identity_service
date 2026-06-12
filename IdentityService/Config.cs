@@ -35,49 +35,55 @@ public static class Config
         }
     ];
 
-    public static IEnumerable<Client> Clients =>
-    [
-        new()
-        {
-            ClientId = "smart_scrum_poker_frontend",
-            RequireClientSecret = false,
+    public static IEnumerable<Client> Clients(IConfiguration configuration)
+    {
+        var frontendRedirectUri = configuration["IdentityServer:FrontendRedirectUri"];
+        var frontendCorsOrigin = configuration["IdentityServer:FrontendCorsOrigin"];
 
-            AllowedGrantTypes = GrantTypes.Code,
-            AccessTokenLifetime = 3600, // 1 hour
-            AbsoluteRefreshTokenLifetime = 2592000, // 30 days
-            SlidingRefreshTokenLifetime = 1296000, // 15 days
+        return
+        [
+            new()
+            {
+                ClientId = "smart_scrum_poker_frontend",
+                RequireClientSecret = false,
 
-            RedirectUris = { "https://localhost.balazskrizsan.com:3010/auth-callback" },
-            AllowedCorsOrigins = { "https://localhost.balazskrizsan.com:3010" },
-            // FrontChannelLogoutUri = "https://localhost:44300/signout-oidc",
-            // PostLogoutRedirectUris = { "https://localhost:44300/signout-callback-oidc" },
+                AllowedGrantTypes = GrantTypes.Code,
+                AccessTokenLifetime = 3600, // 1 hour
+                AbsoluteRefreshTokenLifetime = 2592000, // 30 days
+                SlidingRefreshTokenLifetime = 1296000, // 15 days
 
-            AllowOfflineAccess = true,
-            AllowedScopes = { "openid", "profile", "nickname", "poker.start" }
-        },
-        new()
-        {
-            ClientId = "smart_scrum_poker_ids",
-            ClientSecrets = { new Secret("smart_scrum_poker_ids".Sha256()) },
-            AllowedGrantTypes = GrantTypes.ClientCredentials,
-            AccessTokenLifetime = 3600,
-            AllowedScopes = { "user.info.read" }
-        },
-        new()
-        {
-            ClientId = "smart_scrum_poker_ids_quick_register_finish",
-            ClientSecrets = { new Secret("smart_scrum_poker_ids_quick_register_finish".Sha256()) },
-            AllowedGrantTypes = GrantTypes.ClientCredentials,
-            AccessTokenLifetime = 3600,
-            AllowedScopes = { "user.quick_register.finish" }
-        },
-        new()
-        {
-            ClientId = "smart_scrum_poker_aws",
-            ClientSecrets = { new Secret("smart_scrum_poker_aws".Sha256()) },
-            AllowedGrantTypes = GrantTypes.ClientCredentials,
-            AccessTokenLifetime = 3600,
-            AllowedScopes = { "aws.ses" }
-        }
-    ];
+                RedirectUris = { frontendRedirectUri },
+                AllowedCorsOrigins = { frontendCorsOrigin },
+                // FrontChannelLogoutUri = "https://localhost:44300/signout-oidc",
+                // PostLogoutRedirectUris = { "https://localhost:44300/signout-callback-oidc" },
+
+                AllowOfflineAccess = true,
+                AllowedScopes = { "openid", "profile", "nickname", "poker.start" }
+            },
+            new()
+            {
+                ClientId = "smart_scrum_poker_ids",
+                ClientSecrets = { new Secret("smart_scrum_poker_ids".Sha256()) },
+                AllowedGrantTypes = GrantTypes.ClientCredentials,
+                AccessTokenLifetime = 3600,
+                AllowedScopes = { "user.info.read" }
+            },
+            new()
+            {
+                ClientId = "smart_scrum_poker_ids_quick_register_finish",
+                ClientSecrets = { new Secret("smart_scrum_poker_ids_quick_register_finish".Sha256()) },
+                AllowedGrantTypes = GrantTypes.ClientCredentials,
+                AccessTokenLifetime = 3600,
+                AllowedScopes = { "user.quick_register.finish" }
+            },
+            new()
+            {
+                ClientId = "smart_scrum_poker_aws",
+                ClientSecrets = { new Secret("smart_scrum_poker_aws".Sha256()) },
+                AllowedGrantTypes = GrantTypes.ClientCredentials,
+                AccessTokenLifetime = 3600,
+                AllowedScopes = { "aws.ses" }
+            }
+        ];
+    }
 }
