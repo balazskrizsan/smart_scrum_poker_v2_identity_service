@@ -1,0 +1,76 @@
+name: .NET
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v3
+
+    - name: Set Release version env variable
+      run: |
+        echo "RELEASE_VERSION=1.0" >> $GITHUB_ENV
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+      with:
+        images: kbalazsworks/stackjudge_identity_service
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+
+    - name: File system info
+      run: |
+        echo "===========> github.workspace var: ${{ github.workspace }}"
+        echo "===========> pwd:"
+        pwd
+        echo "===========> ls -hal:"
+        ls -hal
+        echo "===========> ls -hal ./IDS:"
+        ls -hal ./IDS
+
+    - name: Restore dependencies
+      run: cd IdentityService && dotnet restore
+
+    - name: Build
+      run: cd IdentityService && dotnet build  --no-restore
+
+    - name: Build docker image
+      run: |
+        cd IDS && docker build --tag stackjudge_identity_server:latest .
+
+    - name: Save docker image
+      run: |
+        cd IDS && docker save -o ./../stackjudge_identity_server:${{ env.RELEASE_VERSION }}.docker stackjudge_identity_server:latest
+
+    - name: File system info
+      run: |
+        echo "===========> pwd:"
+        pwd
+        echo "===========> ls -hal:"
+        ls -hal
+        echo "===========> ls -hal ./IDS:"
+        ls -hal ./IDS
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+      with:
+        context: ./IDS/
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
