@@ -17,6 +17,9 @@ Log.Logger = new LoggerConfiguration()
 Log.Information("Starting...");
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddEnvironmentVariables();
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var migrationsAssembly = typeof(Config).Assembly.GetName().Name;
 
