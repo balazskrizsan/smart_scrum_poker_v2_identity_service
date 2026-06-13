@@ -53,11 +53,11 @@ jobs:
 
     - name: Build docker image
       run: |
-        cd IdentityService && docker build --tag stackjudge_identity_server:latest .
+        cd IdentityService && docker build --tag smart_scrum_poker_v2_identity_service:latest .
 
     - name: Save docker image
       run: |
-        cd IdentityService && docker save -o ./../stackjudge_identity_server:${{ env.RELEASE_VERSION }}.docker stackjudge_identity_server:latest
+        cd IdentityService && docker save -o ./../smart_scrum_poker_v2_identity_service:${{ env.RELEASE_VERSION }}.docker smart_scrum_poker_v2_identity_service:latest
 
     - name: File system info
       run: |
