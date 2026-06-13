@@ -65,12 +65,12 @@ jobs:
         pwd
         echo "===========> ls -hal:"
         ls -hal
-        echo "===========> ls -hal ./IDS:"
-        ls -hal ./IDS
+        echo "===========> ls -hal ./IdentityService:"
+        ls -hal ./IdentityService
 
     - name: Build and push Docker image
       uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
       with:
-        context: ./IDS/
+        context: ./IdentityService/
         push: true
         tags: ${{ steps.meta.outputs.tags }}
