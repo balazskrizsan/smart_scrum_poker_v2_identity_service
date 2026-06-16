@@ -17,6 +17,7 @@ jobs:
     - name: Set Release version env variable
       run: |
         echo "RELEASE_VERSION=1.0" >> $GITHUB_ENV
+        echo "COMMIT_SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
     - name: Log in to Docker Hub
       uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
@@ -73,4 +74,4 @@ jobs:
       with:
         context: ./IdentityService/
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
+        tags: kbalazsworks/smart_scrum_poker_v2_identity_service:${{ env.RELEASE_VERSION }}, kbalazsworks/smart_scrum_poker_v2_identity_service:latest, kbalazsworks/smart_scrum_poker_v2_identity_service:commit_sha_short_${{ env.COMMIT_SHA_SHORT }}
