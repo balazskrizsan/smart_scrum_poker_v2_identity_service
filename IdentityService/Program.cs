@@ -83,19 +83,23 @@ builder.Services.AddIdentityServer(options =>
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    var port = int.Parse(builder.Configuration["IdentityServer:Port"]);
+    var port = int.Parse(builder.Configuration["IdentityServer:Port"] ?? "80");
+    var useHttps = builder.Configuration.GetValue<bool>("Certificate:UseHttps");
     var certPath = builder.Configuration["Certificate:Path"];
     var certPassword = builder.Configuration["Certificate:Password"];
     
     options.ListenAnyIP(port, listenOptions =>
     {
-        try
+        if (useHttps && !string.IsNullOrEmpty(certPath))
         {
-            listenOptions.UseHttps(new X509Certificate2(certPath, certPassword));
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Certificate error: {ex.Message}");
+            try
+            {
+                listenOptions.UseHttps(new X509Certificate2(certPath, certPassword));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Certificate error: {ex.Message}");
+            }
         }
     });
 });
@@ -103,7 +107,10 @@ builder.WebHost.ConfigureKestrel(options =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
-app.UseHttpsRedirection();
+if (builder.Configuration.GetValue<bool>("Certificate:UseHttps"))
+{
+    app.UseHttpsRedirection();
+}
 app.UseIdentityServer();
 
 app.UseStaticFiles();
