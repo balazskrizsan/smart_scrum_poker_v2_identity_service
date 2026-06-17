@@ -48,7 +48,19 @@ builder.Host.UseSerilog((context, lc) =>
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseNpgsql(connectionString, sqlOptions => sqlOptions.MigrationsAssembly(migrationsAssembly));
+    options.UseNpgsql(connectionString, sqlOptions =>
+    {
+        sqlOptions.MigrationsAssembly(migrationsAssembly);
+        sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+    });
+});
+builder.Services.AddDbContext<PersistedGrantDbContext>(options =>
+{
+    options.UseNpgsql(connectionString, sqlOptions =>
+    {
+        sqlOptions.MigrationsAssembly(migrationsAssembly);
+        sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+    });
 });
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -76,11 +88,7 @@ builder.Services.AddIdentityServer(options =>
     .AddInMemoryApiResources(Config.ApiResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
     .AddInMemoryClients(Config.Clients(builder.Configuration))
-    .AddOperationalStore(options =>
-    {
-        options.ConfigureDbContext = db =>
-            db.UseNpgsql(connectionString, opt => { opt.MigrationsAssembly(migrationsAssembly); });
-    });
+    .AddOperationalStore(options => options.ConfigureDbContext = db => db.UseNpgsql(connectionString));
 
 builder.WebHost.ConfigureKestrel(options =>
 {
@@ -88,7 +96,7 @@ builder.WebHost.ConfigureKestrel(options =>
     var useHttps = builder.Configuration.GetValue<bool>("Certificate:UseHttps");
     var certPath = builder.Configuration["Certificate:Path"];
     var certPassword = builder.Configuration["Certificate:Password"];
-    
+
     options.ListenAnyIP(port, listenOptions =>
     {
         if (useHttps && !string.IsNullOrEmpty(certPath))
@@ -130,6 +138,7 @@ if (builder.Configuration.GetValue<bool>("Certificate:UseHttps"))
 {
     app.UseHttpsRedirection();
 }
+
 app.UseIdentityServer();
 
 app.UseStaticFiles();
