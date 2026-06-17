@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using Duende.IdentityServer.EntityFramework.Interfaces;
 using IdentityServer.Services;
 using IdentityService;
 using IdentityService.Database;
@@ -105,6 +106,24 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var applicationDbContext = services.GetRequiredService<ApplicationDbContext>();
+        applicationDbContext.Database.Migrate();
+
+        var persistedGrantDbContext = services.GetRequiredService<IPersistedGrantDbContext>();
+        (persistedGrantDbContext as DbContext)?.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating the database.");
+    }
+}
 
 app.UseForwardedHeaders();
 if (builder.Configuration.GetValue<bool>("Certificate:UseHttps"))
