@@ -4,13 +4,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdentityService.Database;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<IdentityUser>
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IConfiguration configuration)
+    : IdentityDbContext<IdentityUser>(options)
 {
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseNpgsql("Host=localhost;Port=4050;Database=app_db;Username=admin;Password=password");
+            optionsBuilder.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
         }
     }
 }
