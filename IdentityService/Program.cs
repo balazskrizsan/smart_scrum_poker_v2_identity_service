@@ -1,5 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
-using Duende.IdentityServer.EntityFramework.Interfaces;
+using Duende.IdentityServer.EntityFramework.DbContexts;
 using IdentityServer.Services;
 using IdentityService;
 using IdentityService.Database;
@@ -36,7 +36,7 @@ builder.Host.UseSerilog((context, lc) =>
 {
     lc.MinimumLevel.Debug()
         .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-        .MinimumLevel.Override("Microsoft.HostingLifeti,e", LogEventLevel.Information)
+        .MinimumLevel.Override("Microsoft.HostingLifetime", LogEventLevel.Information)
         .MinimumLevel.Override("Microsoft.AspNetCore.Authentication", LogEventLevel.Information)
         .MinimumLevel.Override("System", LogEventLevel.Warning)
         .WriteTo.Console(
@@ -115,8 +115,8 @@ using (var scope = app.Services.CreateScope())
         var applicationDbContext = services.GetRequiredService<ApplicationDbContext>();
         applicationDbContext.Database.Migrate();
 
-        var persistedGrantDbContext = services.GetRequiredService<IPersistedGrantDbContext>();
-        (persistedGrantDbContext as DbContext)?.Database.Migrate();
+        var persistedGrantDbContext = services.GetRequiredService<PersistedGrantDbContext>();
+        persistedGrantDbContext.Database.Migrate();
     }
     catch (Exception ex)
     {
