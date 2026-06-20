@@ -184,6 +184,15 @@ public class Index(
 
             Console.WriteLine($"[QuickReg] User created and signed in. Context: {context != null}, ReturnUrl: {QuickRegisterInput.ReturnUrl}");
 
+            // If ReturnUrl is the callback endpoint, redirect to the original authorize endpoint instead
+            if (!string.IsNullOrEmpty(QuickRegisterInput.ReturnUrl) && QuickRegisterInput.ReturnUrl.StartsWith("/connect/authorize/callback"))
+            {
+                // Extract the original authorize parameters and redirect to /connect/authorize
+                var returnUrl = QuickRegisterInput.ReturnUrl.Replace("/connect/authorize/callback", "/connect/authorize");
+                Console.WriteLine($"[QuickReg] Redirecting to authorize endpoint: {returnUrl}");
+                return Redirect(returnUrl);
+            }
+
             if (context != null)
             {
                 ArgumentNullException.ThrowIfNull(QuickRegisterInput.ReturnUrl, nameof(QuickRegisterInput.ReturnUrl));
