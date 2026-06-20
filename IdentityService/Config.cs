@@ -54,8 +54,6 @@ public static class Config
 
                 RedirectUris = { frontendRedirectUri },
                 AllowedCorsOrigins = { frontendCorsOrigin },
-                // FrontChannelLogoutUri = "https://localhost:44300/signout-oidc",
-                // PostLogoutRedirectUris = { "https://localhost:44300/signout-callback-oidc" },
 
                 AllowOfflineAccess = true,
                 AllowedScopes = { "openid", "profile", "nickname", "poker.start" }
