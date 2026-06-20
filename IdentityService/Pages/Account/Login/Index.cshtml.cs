@@ -202,7 +202,7 @@ public class Index(
                     return this.LoadingPage(QuickRegisterInput.ReturnUrl);
                 }
 
-                return Redirect(QuickRegisterInput.ReturnUrl ?? "~/");
+                return Redirect(QuickRegisterInput.ReturnUrl);
             }
 
             if (Url.IsLocalUrl(QuickRegisterInput.ReturnUrl))
