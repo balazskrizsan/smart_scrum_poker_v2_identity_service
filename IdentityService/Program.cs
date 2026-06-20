@@ -64,6 +64,12 @@ builder.Services.AddDbContext<PersistedGrantDbContext>(options =>
 });
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    options.Cookie.Domain = ".localhost.balazskrizsan.com";
+});
 builder.Services.AddScoped<UserInputValidationService>();
 builder.Services.AddScoped<QuicRegisterService>();
 builder.Services.AddScoped<RegisterService>();
