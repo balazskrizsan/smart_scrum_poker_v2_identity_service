@@ -33,6 +33,7 @@ public class Index(
 
     public async Task<IActionResult> OnGet(string? returnUrl)
     {
+        Console.WriteLine($"[Login OnGet] ReturnUrl: {returnUrl}");
         var modelData = await loginModelBuilderService.BuildModelAsync(returnUrl);
         Input = modelData.Input;
         QuickRegisterInput = modelData.QuickRegisterInput;
@@ -180,6 +181,8 @@ public class Index(
 
             await HttpContext.SignInAsync(isuser);
             await quicRegisterService.TrySendCompleteRegistrationToken(user);
+
+            Console.WriteLine($"[QuickReg] User created and signed in. Context: {context != null}, ReturnUrl: {QuickRegisterInput.ReturnUrl}");
 
             if (context != null)
             {

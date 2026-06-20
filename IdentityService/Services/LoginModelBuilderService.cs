@@ -13,6 +13,7 @@ public class LoginModelBuilderService(
 {
     public async Task<LoginModelData> BuildModelAsync(string? returnUrl)
     {
+        Console.WriteLine($"[LoginModelBuilder] ReturnUrl: {returnUrl}");
         var input = new InputModel
         {
             ReturnUrl = returnUrl
@@ -24,6 +25,7 @@ public class LoginModelBuilderService(
         };
 
         var context = await interaction.GetAuthorizationContextAsync(returnUrl);
+        Console.WriteLine($"[LoginModelBuilder] Context: {context != null}, ClientId: {context?.Client.ClientId}");
         if (context?.IdP != null)
         {
             var scheme = await schemeProvider.GetSchemeAsync(context.IdP);
