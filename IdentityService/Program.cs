@@ -5,6 +5,7 @@ using IdentityService;
 using IdentityService.Database;
 using IdentityService.Repositories;
 using IdentityService.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -64,12 +65,15 @@ builder.Services.AddDbContext<PersistedGrantDbContext>(options =>
 });
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
-    options.Cookie.Domain = ".localhost.balazskrizsan.com";
-});
+// builder.Services.ConfigureApplicationCookie(options =>
+// {
+//     options.Cookie.SameSite = SameSiteMode.None;
+//     options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+//     options.Cookie.Domain = ".localhost.balazskrizsan.com";
+// });
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/var/dpkeys"))
+    .SetApplicationName("smart-scrum-poker");
 builder.Services.AddScoped<UserInputValidationService>();
 builder.Services.AddScoped<QuicRegisterService>();
 builder.Services.AddScoped<RegisterService>();
