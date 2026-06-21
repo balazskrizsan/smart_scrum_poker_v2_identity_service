@@ -104,29 +104,37 @@ public class Index(
 
             await HttpContext.SignInAsync(isuser, props);
 
+            // If ReturnUrl contains /connect/authorize/callback, it's invalid - fix it
+            string returnUrl = Input.ReturnUrl;
+            if (!string.IsNullOrEmpty(returnUrl) && returnUrl.Contains("/connect/authorize/callback"))
+            {
+                returnUrl = returnUrl.Replace("/connect/authorize/callback", "/connect/authorize");
+                Console.WriteLine($"[LocalLogin] Fixed invalid ReturnUrl from {Input.ReturnUrl} to {returnUrl}");
+            }
+
             if (context != null)
             {
                 // This "can't happen", because if the ReturnUrl was null, then the context would be null
-                ArgumentNullException.ThrowIfNull(Input.ReturnUrl, nameof(Input.ReturnUrl));
+                ArgumentNullException.ThrowIfNull(returnUrl, nameof(returnUrl));
 
                 if (context.IsNativeClient())
                 {
                     // The client is native, so this change in how to
                     // return the response is for better UX for the end user.
-                    return this.LoadingPage(Input.ReturnUrl);
+                    return this.LoadingPage(returnUrl);
                 }
 
                 // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
-                return Redirect(Input.ReturnUrl ?? "~/");
+                return Redirect(returnUrl);
             }
 
             // request for a local page
-            if (Url.IsLocalUrl(Input.ReturnUrl))
+            if (Url.IsLocalUrl(returnUrl))
             {
-                return Redirect(Input.ReturnUrl);
+                return Redirect(returnUrl);
             }
 
-            if (string.IsNullOrEmpty(Input.ReturnUrl))
+            if (string.IsNullOrEmpty(returnUrl))
             {
                 return Redirect("~/");
             }
