@@ -72,7 +72,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 //     options.Cookie.Domain = ".localhost.balazskrizsan.com";
 // });
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "dpkeys")))
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "/mnt/k8s/ids-dpkeys")))
     .SetApplicationName("smart-scrum-poker");
 builder.Services.AddScoped<UserInputValidationService>();
 builder.Services.AddScoped<QuicRegisterService>();
