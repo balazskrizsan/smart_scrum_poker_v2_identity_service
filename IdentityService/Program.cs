@@ -1,10 +1,13 @@
 using System.Security.Cryptography.X509Certificates;
+using Duende.IdentityServer;
+using Duende.IdentityServer.Configuration;
 using Duende.IdentityServer.EntityFramework.DbContexts;
 using IdentityServer.Services;
 using IdentityService;
 using IdentityService.Database;
 using IdentityService.Repositories;
 using IdentityService.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -65,12 +68,12 @@ builder.Services.AddDbContext<PersistedGrantDbContext>(options =>
 });
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
-// builder.Services.ConfigureApplicationCookie(options =>
-// {
-//     options.Cookie.SameSite = SameSiteMode.None;
-//     options.Cookie.SecurePolicy = CookieSecurePolicy.None;
-//     options.Cookie.Domain = ".localhost.balazskrizsan.com";
-// });
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.Domain = ".localhost.balazskrizsan.com";
+});
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "/mnt/k8s/ids-dpkeys")))
     .SetApplicationName("smart-scrum-poker");
@@ -99,6 +102,17 @@ builder.Services.AddIdentityServer(options =>
     .AddInMemoryApiScopes(Config.ApiScopes)
     .AddInMemoryClients(Config.Clients(builder.Configuration))
     .AddOperationalStore(options => options.ConfigureDbContext = db => db.UseNpgsql(connectionString));
+
+builder.Services.Configure<IdentityServerOptions>(options =>
+{
+    options.Authentication.CookieSameSiteMode = SameSiteMode.None;
+});
+
+builder.Services.Configure<CookieAuthenticationOptions>(IdentityServerConstants.DefaultCookieAuthenticationScheme, options =>
+{
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
 
 builder.WebHost.ConfigureKestrel(options =>
 {
