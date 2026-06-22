@@ -11,7 +11,7 @@ public class HttpsRewriteMiddleware
     public HttpsRewriteMiddleware(RequestDelegate next, IConfiguration configuration)
     {
         _next = next;
-        _forceHttps = configuration.GetValue<bool>("IdentityServer:ForceHttpsRewrite", true);
+        _forceHttps = configuration.GetValue("IdentityServer:ForceHttpsRewrite", true);
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -54,12 +54,12 @@ public class HttpsRewriteMiddleware
             {
                 if (property.Value is JsonValue value && value.TryGetValue(out string? strValue))
                 {
-                    if (strValue != null && strValue.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                    if (strValue.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
                     {
                         obj[property.Key] = strValue.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase);
                     }
                 }
-                else if (property.Value is JsonNode childNode)
+                else if (property.Value is { } childNode)
                 {
                     RewriteUrlsToHttps(childNode);
                 }
@@ -69,7 +69,7 @@ public class HttpsRewriteMiddleware
         {
             foreach (var item in array)
             {
-                RewriteUrlsToHttps(item);
+                if (item != null) RewriteUrlsToHttps(item);
             }
         }
     }
