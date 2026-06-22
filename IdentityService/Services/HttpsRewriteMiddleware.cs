@@ -11,7 +11,7 @@ public class HttpsRewriteMiddleware
     public HttpsRewriteMiddleware(RequestDelegate next, IConfiguration configuration)
     {
         _next = next;
-        _forceHttps = configuration.GetValue<bool>("IdentityServer:ForceHttpsRewrite", false);
+        _forceHttps = configuration.GetValue<bool>("IdentityServer:ForceHttpsRewrite", true);
     }
 
     public async Task InvokeAsync(HttpContext context)
