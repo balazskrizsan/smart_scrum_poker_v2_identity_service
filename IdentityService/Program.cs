@@ -163,6 +163,7 @@ if (builder.Configuration.GetValue<bool>("Certificate:UseHttps"))
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<HttpsRewriteMiddleware>();
 app.UseIdentityServer();
 
 app.UseStaticFiles();
