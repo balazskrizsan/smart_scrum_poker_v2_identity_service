@@ -40,6 +40,7 @@ public static class Config
         var frontendRedirectUri = configuration["IdentityServer:FrontendRedirectUri"];
         var frontendCorsOrigin = configuration["IdentityServer:FrontendCorsOrigin"];
 
+
         return
         [
             new()
