@@ -21,6 +21,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Network" Version="3.0.0" />
   </ItemGroup>
 
 </Project>

@@ -12,8 +12,6 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using Serilog.Events;
-using Serilog.Sinks.SystemConsole.Themes;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -36,18 +34,15 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("user.info.read", policy => policy.RequireClaim("scope", "user.info.read"));
 });
 
-builder.Host.UseSerilog((context, lc) =>
+var logState = new LogState();
+builder.Services.AddSingleton(logState);
+
+var envName = builder.Configuration["ASPNETCORE_ENVIRONMENT"] ?? "dev";
+var appName = builder.Configuration["Logging:AppName"] ?? "identity_service";
+
+builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 {
-    lc.MinimumLevel.Debug()
-        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-        .MinimumLevel.Override("Microsoft.HostingLifetime", LogEventLevel.Information)
-        .MinimumLevel.Override("Microsoft.AspNetCore.Authentication", LogEventLevel.Information)
-        .MinimumLevel.Override("System", LogEventLevel.Warning)
-        .WriteTo.Console(
-            outputTemplate:
-            "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}",
-            theme: AnsiConsoleTheme.Code)
-        .Enrich.FromLogContext();
+    LogConfig.ConfigureLogger(context.Configuration, envName, appName, logState, loggerConfiguration);
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
