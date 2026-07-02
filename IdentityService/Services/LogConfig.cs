@@ -2,6 +2,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
 using Serilog.Sinks.Network;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace IdentityService.Services;
 
@@ -34,7 +35,7 @@ public static class LogConfig
         }
         else
         {
-            loggerConfiguration.WriteTo.Console();
+            loggerConfiguration.WriteTo.Console(theme: SystemConsoleTheme.Colored);
         }
 
         if (logstashEnabled && !string.IsNullOrEmpty(logstashHost))
