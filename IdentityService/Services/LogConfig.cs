@@ -1,10 +1,80 @@
 using Serilog;
 using Serilog.Events;
+using Serilog.Formatting;
 using Serilog.Formatting.Json;
 using Serilog.Sinks.Network;
+using Serilog.Sinks.Network.Formatters;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace IdentityService.Services;
+
+public class LogLevelMappingJsonFormatter : ITextFormatter
+{
+    private readonly JsonFormatter _jsonFormatter;
+
+    public LogLevelMappingJsonFormatter()
+    {
+        _jsonFormatter = new JsonFormatter();
+    }
+
+    public void Format(LogEvent logEvent, TextWriter output)
+    {
+        using var stringWriter = new StringWriter();
+        _jsonFormatter.Format(logEvent, stringWriter);
+        var json = stringWriter.ToString();
+
+        var levelMapping = new Dictionary<string, string>
+        {
+            { "Verbose", "TRACE" },
+            { "Debug", "DEBUG" },
+            { "Information", "INFO" },
+            { "Warning", "WARN" },
+            { "Error", "ERROR" },
+            { "Fatal", "FATAL" }
+        };
+
+        foreach (var mapping in levelMapping)
+        {
+            json = json.Replace($"\"Level\":\"{mapping.Key}\"", $"\"Level\":\"{mapping.Value}\"");
+        }
+
+        output.Write(json);
+    }
+}
+
+public class LogLevelMappingLogstashFormatter : ITextFormatter
+{
+    private readonly LogstashJsonFormatter _logstashFormatter;
+
+    public LogLevelMappingLogstashFormatter()
+    {
+        _logstashFormatter = new LogstashJsonFormatter();
+    }
+
+    public void Format(LogEvent logEvent, TextWriter output)
+    {
+        using var stringWriter = new StringWriter();
+        _logstashFormatter.Format(logEvent, stringWriter);
+        var json = stringWriter.ToString();
+
+        var levelMapping = new Dictionary<string, string>
+        {
+            { "Verbose", "TRACE" },
+            { "Debug", "DEBUG" },
+            { "Information", "INFO" },
+            { "Warning", "WARN" },
+            { "Error", "ERROR" },
+            { "Fatal", "FATAL" }
+        };
+
+        foreach (var mapping in levelMapping)
+        {
+            json = json.Replace($"\"level\":\"{mapping.Key}\"", $"\"level\":\"{mapping.Value}\"");
+        }
+
+        output.Write(json);
+    }
+}
 
 public static class LogConfig
 {
@@ -31,7 +101,7 @@ public static class LogConfig
 
         if (logType.ToUpper() == "JSON")
         {
-            loggerConfiguration.WriteTo.Console(formatter: new JsonFormatter());
+            loggerConfiguration.WriteTo.Console(formatter: new LogLevelMappingJsonFormatter());
         }
         else
         {
@@ -41,7 +111,7 @@ public static class LogConfig
         if (logstashEnabled && !string.IsNullOrEmpty(logstashHost))
         {
             var uri = $"tcp://{logstashHost}:{logstashPort}";
-            loggerConfiguration.WriteTo.TCPSink(uri);
+            loggerConfiguration.WriteTo.TCPSink(uri, new LogLevelMappingLogstashFormatter());
         }
     }
 }
