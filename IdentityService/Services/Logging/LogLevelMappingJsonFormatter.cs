@@ -40,6 +40,9 @@ public class LogLevelMappingJsonFormatter : ITextFormatter
         var root = doc.RootElement.Clone();
         var outputObj = new Dictionary<string, JsonElement>();
 
+        // Add rendered Message
+        outputObj["message"] = JsonSerializer.SerializeToElement(logEvent.MessageTemplate.Render(logEvent.Properties));
+
         foreach (var property in root.EnumerateObject())
         {
             if (property.NameEquals("Properties"))
