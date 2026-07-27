@@ -18,8 +18,9 @@ public class TokenValidationService : ITokenValidationService
     public TokenValidationService(IConfiguration configuration)
     {
         _configuration = configuration;
+        var issuerUri = _configuration["IdentityServer:IssuerUri"];
         _configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-            "https://localhost.balazskrizsan.com:4040/.well-known/openid-configuration",
+            $"{issuerUri}/.well-known/openid-configuration",
             new OpenIdConnectConfigurationRetriever());
     }
 
@@ -30,14 +31,15 @@ public class TokenValidationService : ITokenValidationService
             var tokenHandler = new JwtSecurityTokenHandler();
             var openIdConfig = await _configurationManager.GetConfigurationAsync(CancellationToken.None);
 
+            var issuerUri = _configuration["IdentityServer:IssuerUri"];
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKeys = openIdConfig.SigningKeys,
                 ValidateIssuer = true,
-                ValidIssuer = "https://localhost.balazskrizsan.com:4040",
+                ValidIssuer = issuerUri,
                 ValidateAudience = true,
-                ValidAudience = "https://localhost.balazskrizsan.com:4040",
+                ValidAudience = issuerUri,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             };

@@ -67,7 +67,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.Domain = ".localhost.balazskrizsan.com";
+    options.Cookie.Domain = builder.Configuration["Cookie:Domain"];
 });
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "/mnt/k8s/ids-dpkeys")))

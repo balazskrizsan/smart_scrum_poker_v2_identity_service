@@ -7,7 +7,8 @@ namespace IdentityService.Services;
 public class AwsSesService(
     HttpClient httpClient,
     TokenGeneratorService tokenGeneratorService,
-    ILogger<AwsSesService> logger
+    ILogger<AwsSesService> logger,
+    IConfiguration configuration
 )
 {
     public class EmailRequest
@@ -121,9 +122,11 @@ public class AwsSesService(
         var jsonContent = JsonSerializer.Serialize(request, jsonOptions);
         var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
+        var fullUrl = configuration["AwsServices:FullUrl"];
+
         try
         {
-            return await httpClient.PostAsync($"https://localhost.balazskrizsan.com:8080{endpoint}", content);
+            return await httpClient.PostAsync($"{fullUrl}{endpoint}", content);
         }
         catch (Exception ex)
         {

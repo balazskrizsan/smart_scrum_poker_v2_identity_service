@@ -10,7 +10,8 @@ namespace IdentityService.Services;
 public class TokenGeneratorService(
     ITokenService tokenService,
     IClientStore clientStore,
-    ILogger<AwsSesService> logger
+    ILogger<AwsSesService> logger,
+    IConfiguration configuration
 )
 {
     public async Task<string> GenerateClientCredentialsTokenAsync(string clientId, string scope, Dictionary<string, string>? additionalClaims = null)
@@ -20,7 +21,7 @@ public class TokenGeneratorService(
             throw new InvalidOperationException("Client not found");
 
         var now = DateTime.UtcNow;
-        var issuer = "https://localhost.balazskrizsan.com:4040";
+        var issuer = configuration["IdentityServer:IssuerUri"];
 
         var claims = new List<Claim>
         {

@@ -8,7 +8,8 @@ public class QuicRegisterService(
     UserManager<IdentityUser> userManager,
     SignInManager<IdentityUser> signInManager,
     AwsSesService awsSesService,
-    TokenGeneratorService tokenGeneratorService
+    TokenGeneratorService tokenGeneratorService,
+    IConfiguration configuration
 )
 {
     public async Task<(IdentityUser? user, IdentityResult result)> CreateQuickUserAsync(string name, string email,
@@ -68,8 +69,9 @@ public class QuicRegisterService(
                 { "user_email", user.Email },
             }
         );
+        var issuerUri = configuration["IdentityServer:IssuerUri"];
         var completeRegistrationUrl =
-            $"https://localhost.balazskrizsan.com:4040/Account/QuickRegisterFinish?token={Uri.EscapeDataString(quickRegFinish)}";
+            $"{issuerUri}/Account/QuickRegisterFinish?token={Uri.EscapeDataString(quickRegFinish)}";
 
         await awsSesService.SendTemplatedEmailByIdAsync(new AwsSesService.TemplatedEmailByIdRequest
         {
