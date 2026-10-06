@@ -1,11 +1,20 @@
 ### Request and store token
 
-POST https://localhost:4040/connect/token
+#POST https://localhost.balazskrizsan.com:4040/connect/token
+POST https://ids--smart-scrum-poker.localhost.balazskrizsan.com/connect/token
 Content-Type: application/x-www-form-urlencoded
 
 client_id=smart_scrum_poker_ids&client_secret=smart_scrum_poker_ids&grant_type=client_credentials&scope=user.info.read
 
 > {% client.global.set("token", response.body.access_token); %}
+
+### Introspect token
+
+POST https://ids--smartscrumpoker.localhost.balazskrizsan.com/connect/introspect
+Content-Type: application/x-www-form-urlencoded
+
+client_id=smart_scrum_poker_ids&client_secret=smart_scrum_poker_ids&token=eyJhbGciOiJSUzI1NiIsImtpZCI6IkE2QTJFNUZFNjI2NTJGQjUzRDFCNjJFMzdCNTU0Q0Q4IiwidHlwIjoiYXQrand0In0.eyJpc3MiOiJodHRwczovL2lkcy0tc21hcnQtc2NydW0tcG9rZXIubG9jYWxob3N0LmJhbGF6c2tyaXpzYW4uY29tIiwibmJmIjoxNzgxNzMxMzk1LCJpYXQiOjE3ODE3MzEzOTUsImV4cCI6MTc4MTczNDk5NSwiYXVkIjoidXNlcmluZm8uYXBpIiwic2NvcGUiOlsidXNlci5pbmZvLnJlYWQiXSwiY2xpZW50X2lkIjoic21hcnRfc2NydW1fcG9rZXJfaWRzIiwianRpIjoiNEE2OTU1MjVBNTJGMkVEMjEzQUE5NjQ5RjA5QUFGNzIifQ.GpnLcEfhsdCo5vgjd_K_phZRalqpAVasxnXm92B3qbflKTKWB7uRLO1FQzM9FHo-rTUGfOGmNKtYbeshM4f_G-l_PeOAtB20lhuRyCNavyBtGLcjbR5fRGZQJ6IiBFthRx06JGJrJCgqGwAgWfCUmPWrxImXUK58_HrM6UTa14WThO4JmVkP_J60Jwg2Ymy4BSnAdNObueEkSPr7HaPWConYQWR-HA-hSFpnuE_0Jl9St-KYuZsTxmNmemoPSkwlzs6HxD04DffY7DHdkKB1KuuCq36HFDiICLeawWfbQ2VYNUf2R7Ct0walgZNoMYsbaAWgXrZ6FGApuXT2rVWNmg
+
 
 ### Call user info
 
