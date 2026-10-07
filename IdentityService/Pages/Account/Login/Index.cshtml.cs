@@ -21,10 +21,11 @@ public class Index(
     UserInputValidationService validationService,
     QuicRegisterService quicRegisterService,
     ILoginModelBuilderService loginModelBuilderService,
-    IUserLookupService userLookupService
+    IUserLookupService userLookupService,
+    ILogger<Index> logger
 )
     : PageModel
-{
+{ 
     public ViewModel View { get; set; } = default!;
 
     [BindProperty] public InputModel Input { get; set; } = default!;
@@ -33,7 +34,7 @@ public class Index(
 
     public async Task<IActionResult> OnGet(string? returnUrl)
     {
-        Console.WriteLine($"[Login OnGet] ReturnUrl: {returnUrl}");
+        logger.LogInformation("[Login OnGet] ReturnUrl: {ReturnUrl}", returnUrl);
         var modelData = await loginModelBuilderService.BuildModelAsync(returnUrl);
         Input = modelData.Input;
         QuickRegisterInput = modelData.QuickRegisterInput;
@@ -109,7 +110,7 @@ public class Index(
             if (!string.IsNullOrEmpty(returnUrl) && returnUrl.Contains("/connect/authorize/callback"))
             {
                 returnUrl = returnUrl.Replace("/connect/authorize/callback", "/connect/authorize");
-                Console.WriteLine($"[LocalLogin] Fixed invalid ReturnUrl from {Input.ReturnUrl} to {returnUrl}");
+                logger.LogInformation("[LocalLogin] Fixed invalid ReturnUrl from {OriginalReturnUrl} to {FixedReturnUrl}", Input.ReturnUrl, returnUrl);
             }
 
             if (context != null)
@@ -190,14 +191,14 @@ public class Index(
             await HttpContext.SignInAsync(isuser);
             await quicRegisterService.TrySendCompleteRegistrationToken(user);
 
-            Console.WriteLine($"[QuickReg] User created and signed in. Context: {context != null}, ReturnUrl: {QuickRegisterInput.ReturnUrl}");
+            logger.LogInformation("[QuickReg] User created and signed in. Context: {HasContext}, ReturnUrl: {ReturnUrl}", context != null, QuickRegisterInput.ReturnUrl);
 
             // If ReturnUrl is the callback endpoint, redirect to the original authorize endpoint instead
             if (!string.IsNullOrEmpty(QuickRegisterInput.ReturnUrl) && QuickRegisterInput.ReturnUrl.StartsWith("/connect/authorize/callback"))
             {
                 // Extract the original authorize parameters and redirect to /connect/authorize
                 var returnUrl = QuickRegisterInput.ReturnUrl.Replace("/connect/authorize/callback", "/connect/authorize");
-                Console.WriteLine($"[QuickReg] Redirecting to authorize endpoint: {returnUrl}");
+                logger.LogInformation("[QuickReg] Redirecting to authorize endpoint: {ReturnUrl}", returnUrl);
                 return Redirect(returnUrl);
             }
 

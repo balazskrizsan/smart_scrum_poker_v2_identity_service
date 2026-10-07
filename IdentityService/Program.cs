@@ -158,6 +158,12 @@ if (builder.Configuration.GetValue<bool>("Certificate:UseHttps"))
     app.UseHttpsRedirection();
 }
 
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self'; img-src 'self' https://smart-scrum-poker-static.s3.us-east-1.amazonaws.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self';");
+    await next();
+});
+
 app.UseMiddleware<HttpsRewriteMiddleware>();
 app.UseIdentityServer();
 

@@ -1,0 +1,55 @@
+@using Duende.IdentityServer.Extensions
+@inject IConfiguration Configuration
+@{
+#nullable enable
+    string? name = null;
+    string? usernick = null;
+    if (!true.Equals(ViewData["signed-out"]))
+    {
+        var nicknameClaim = Context.User?.FindFirst("nickname");
+        usernick = nicknameClaim?.Value ?? Context.User?.GetDisplayName();
+    }
+
+    var frontendUrl = Configuration["Frontend:FullUrl"] ?? "/";
+}
+
+<div class="header--standard header--standard-dark" id="header--standard">
+    <div class="container">
+        <div class="header--standard-wrap">
+            <a href="@frontendUrl" class="logo">
+                <div class="img-wrap">
+                    <img
+                        loading="lazy"
+                        src="https://smart-scrum-poker-static.s3.us-east-1.amazonaws.com/logos/logo-orange.png"
+                        alt="Smart Scrum Poker"
+                    >
+                </div>
+                <div class="title-block">
+                    <h6 class="logo-title">Smart Scrum Poker</h6>
+                    <div class="sub-title">Smarter Estimations for Agile Teams</div>
+                </div>
+            </a>
+
+            <a class="open-responsive-menu js-open-responsive-menu">
+                <svg class="olymp-menu-icon">
+                    <use xlink:href="#olymp-menu-icon"></use>
+                </svg>
+            </a>
+
+            <div class="nav nav-pills nav1 header-menu">
+                <div class="mCustomScrollbar">
+                    <ul>
+                        @if (!string.IsNullOrWhiteSpace(usernick))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-page="/Account/Logout/Index">Logout (@usernick)</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="header-spacer--standard"></div>

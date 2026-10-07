@@ -1,0 +1,88 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    var frontendUrl = Configuration["Frontend:FullUrl"] ?? "/";
+}
+
+<div class="footer footer-full-width" id="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col col-lg-4 col-md-4 col-sm-12 col-12">
+                <div class="widget w-about">
+                    <a href="@frontendUrl" class="logo">
+                        <div class="img-wrap">
+                            <img
+                                loading="lazy"
+                                src="https://smart-scrum-poker-static.s3.us-east-1.amazonaws.com/logos/logo-orange.png"
+                                alt="Smart Scrum Poker"
+                            >
+                        </div>
+                        <div class="title-block">
+                            <h6 class="logo-title">Smart Scrum Poker</h6>
+                            <div class="sub-title">Smarter Estimations for Agile Teams</div>
+                        </div>
+                    </a>
+                    <p>Smarter estimation. Zero fluff. 100% team velocity. No waste. Just clarity.</p>
+                    <ul class="socials">
+                        <li><a href="#"><i class="fab fa-facebook-square" aria-hidden="true"></i></a></li>
+                        <li><a href="#"><i class="fab fa-twitter" aria-hidden="true"></i></a></li>
+                        <li><a href="#"><i class="fab fa-instagram" aria-hidden="true"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col col-lg-2 col-md-4 col-sm-12 col-12">
+                <div class="widget w-list">
+                    <h6 class="title">About</h6>
+                    <ul>
+                        <li><a href="@frontendUrl" target="_blank">Home</a></li>
+                        <li><a href="@frontendUrl/pages/roadmap" target="_blank">Roadmap</a></li>
+                        <li><a href="@frontendUrl/pages/contact" target="_blank">Contact</a></li>
+                        <li><a href="@frontendUrl/pages/faq" target="_blank">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col col-lg-2 col-md-4 col-sm-12 col-12">
+                <div class="widget w-list">
+                    <h6 class="title">Poker</h6>
+                    <ul>
+                        <li><a href="@frontendUrl/pages/poker#logic" target="_blank">Logic</a></li>
+                        <li><a href="@frontendUrl/pages/poker#why" target="_blank">Why?</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col col-lg-2 col-md-4 col-sm-12 col-12">
+                <div class="widget w-list">
+                    <h6 class="title">FAQ</h6>
+                    <ul>
+                        <li><a href="@frontendUrl/pages/faq#how" target="_blank">How?</a></li>
+                        <li><a href="@frontendUrl/pages/faq#new-scoring" target="_blank">New scoring?</a></li>
+                        <li><a href="@frontendUrl/pages/faq#why" target="_blank">Why?</a></li>
+                        <li><a href="@frontendUrl/pages/faq#who" target="_blank">Who?</a></li>
+                        <li><a href="@frontendUrl/pages/faq#when" target="_blank">When?</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col col-lg-2 col-md-4 col-sm-12 col-12">
+                <div class="widget w-list">
+                    <h6 class="title">Future</h6>
+                    <ul>
+                        <li><a href="@frontendUrl/pages/future#ai-poker" target="_blank">AI Poker</a></li>
+                        <li><a href="@frontendUrl/pages/future#jira-integration" target="_blank">Jira integration</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col col-lg-12 col-md-12 col-sm-12 col-12">
+                <div class="sub-footer-copyright">
+                    <span>Copyright <a href="@frontendUrl">Smart Scrum Poker 2024</a></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
