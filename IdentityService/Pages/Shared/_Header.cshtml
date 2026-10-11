@@ -1,13 +1,18 @@
-@using Duende.IdentityServer.Extensions
+@using IdentityService.Services
 @inject IConfiguration Configuration
+@inject INicknameService NicknameService
 @{
 #nullable enable
     string? name = null;
     string? usernick = null;
+    string? username = null;
     if (!true.Equals(ViewData["signed-out"]))
     {
-        var nicknameClaim = Context.User?.FindFirst("nickname");
-        usernick = nicknameClaim?.Value ?? Context.User?.GetDisplayName();
+        username = Context.User?.Identity?.Name;
+        if (!string.IsNullOrEmpty(username))
+        {
+            usernick = NicknameService.GetNickname(username);
+        }
     }
 
     var frontendUrl = Configuration["Frontend:FullUrl"] ?? "/";
@@ -39,7 +44,7 @@
             <div class="nav nav-pills nav1 header-menu">
                 <div class="mCustomScrollbar">
                     <ul>
-                        @if (!string.IsNullOrWhiteSpace(usernick))
+                        @if (!string.IsNullOrWhiteSpace(username))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" asp-page="/Account/Logout/Index">Logout (@usernick)</a>

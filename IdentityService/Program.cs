@@ -82,6 +82,7 @@ builder.Services.AddScoped<IExternalProviderRepository, ExternalProviderReposito
 builder.Services.AddScoped<IExternalProviderService, ExternalProviderService>();
 builder.Services.AddScoped<IUserLookupService, UserLookupService>();
 builder.Services.AddScoped<ILoginModelBuilderService, LoginModelBuilderService>();
+builder.Services.AddScoped<INicknameService, NicknameService>();
 builder.Services.AddIdentityServer(options =>
     {
         options.Events.RaiseErrorEvents = true;
