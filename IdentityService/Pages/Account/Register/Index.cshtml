@@ -1,53 +1,51 @@
 @page
 @model IdentityService.Pages.Register.Index
+@{
+    ViewData["Title"] = "Register";
+    Layout = "_MainLayout";
+}
 
-<div class="login-page">
-    <div class="lead">
-        <h1>Register</h1>
-        <p>Create a new account</p>
+<div class="container">
+    <div class="row">
+        <div class="col col-xl-12 col-12">
+            <h2 style="margin-top: 50px;">Register</h2>
+        </div>
     </div>
 
     <partial name="_ValidationSummary" />
 
     <div class="row">
-        <div class="col-sm-6">
-            <div class="card">
-                <div class="card-header">
-                    <h2>Create Account</h2>
-                </div>
+        <div class="col col-xl-5 col-lg-6 col-md-12 col-sm-12 col-12">
+            <div class="registration-login-form">
+                <div class="title h6">Create Account</div>
+                <form class="content" asp-page="/Account/Register/Index">
+                    <input type="hidden" asp-for="Input.ReturnUrl" />
 
-                <div class="card-body">
-                    <form asp-page="/Account/Register/Index">
-                        <input type="hidden" asp-for="Input.ReturnUrl" />
+                    <div class="row">
+                        <div class="col col-12 col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                            <div class="form-group label-floating">
+                                <label class="control-label" asp-for="Input.Nickname"></label>
+                                <input class="form-control" placeholder="" asp-for="Input.Nickname" autofocus>
+                            </div>
+                            <div class="form-group label-floating">
+                                <label class="control-label" asp-for="Input.Email"></label>
+                                <input class="form-control" placeholder="" asp-for="Input.Email">
+                            </div>
+                            <div class="form-group label-floating">
+                                <label class="control-label" asp-for="Input.Password"></label>
+                                <input type="password" class="form-control" placeholder="" asp-for="Input.Password" autocomplete="off">
+                            </div>
+                            <div class="form-group label-floating">
+                                <label class="control-label" asp-for="Input.ConfirmPassword"></label>
+                                <input type="password" class="form-control" placeholder="" asp-for="Input.ConfirmPassword" autocomplete="off">
+                            </div>
 
-                        <div class="form-group">
-                            <label asp-for="Input.Nickname"></label>
-                            <input class="form-control" placeholder="Nickname" asp-for="Input.Nickname" autofocus>
+                            <button class="btn btn-lg btn-primary full-width" name="Input.Button" value="register">Register</button>
+
+                            <p>Already have an account? <a asp-page="/Account/Login/Index" asp-route-returnUrl="@Model.Input.ReturnUrl">Login here</a></p>
                         </div>
-                        
-                        <div class="form-group">
-                            <label asp-for="Input.Email"></label>
-                            <input class="form-control" placeholder="Email" asp-for="Input.Email">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label asp-for="Input.Password"></label>
-                            <input type="password" class="form-control" placeholder="Password" asp-for="Input.Password" autocomplete="off">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label asp-for="Input.ConfirmPassword"></label>
-                            <input type="password" class="form-control" placeholder="Confirm Password" asp-for="Input.ConfirmPassword" autocomplete="off">
-                        </div>
-                        
-                        <button class="btn btn-primary" name="Input.Button" value="register">Register</button>
-                        <button class="btn btn-secondary" name="Input.Button" value="cancel">Cancel</button>
-                    </form>
-                    
-                    <div class="mt-3">
-                        <p>Already have an account? <a asp-page="/Account/Login/Index" asp-route-returnUrl="@Model.Input.ReturnUrl">Login here</a></p>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
