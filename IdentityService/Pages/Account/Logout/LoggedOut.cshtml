@@ -1,19 +1,83 @@
 @page
 @model IdentityService.Pages.Logout.LoggedOut
+@{
+    ViewData["Title"] = "Logged out";
+    Layout = "_MainLayout";
+}
 
-<div class="logged-out-page">
-    <h1>
-        Logout
-        <small>You are now logged out</small>
-    </h1>
-
-    @if (Model.View.PostLogoutRedirectUri != null)
-    {
-        <div>
-            Click <a class="PostLogoutRedirectUri" href="@Model.View.PostLogoutRedirectUri">here</a> to return to the
-            <span>@Model.View.ClientName</span> application.
+<div class="container">
+    <div class="row mt50">
+        <div class="col col-xl-12 col-12">
+            <h1><i class="fas fa-sign-out-alt"></i> Logged out</h1>
         </div>
-    }
+    </div>
+
+    <div class="row">
+        <div class="col col-xl-5 col-lg-6 col-md-12 col-sm-12 col-12">
+            <div class="registration-login-form">
+                <div class="title h6">See you soon</div>
+                <div class="content">
+                    <div class="align-center mb-4">
+                        <img class="img-fluid" loading="lazy" src="~/img/icon-fly.png" alt="Smart Scrum Poker">
+                    </div>
+
+                    <p class="align-center">You are now logged out of Smart Scrum Poker.</p>
+
+                    @if (Model.View.PostLogoutRedirectUri != null)
+                    {
+                        <p class="align-center">
+                            Click <a class="PostLogoutRedirectUri" href="@Model.View.PostLogoutRedirectUri">here</a> to return to the
+                            <span>@Model.View.ClientName</span> application.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="align-center">
+                            Back to <a asp-page="/Account/Login/Index">Login</a>
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col col-xl-5 col-lg-6 col-md-12 col-sm-12 col-12">
+            <div class="registration-login-form">
+                <div class="title h6">Why Smart Scrum Poker?</div>
+                <div class="content">
+                    <p>
+                        Unlike traditional planning poker tools that rely on gut feelings and abstract
+                        Fibonacci numbers, Smart Scrum Poker evaluates every task on four clearly defined
+                        dimensions: uncertainty, complexity, effort, and risk. This structure keeps
+                        estimation discussions focused and prevents overconfidence or dominant voices
+                        from skewing the outcome. Votes are translated into consistent story points
+                        through a predefined mapping logic, so every estimate stays transparent and
+                        repeatable. Teams reach consensus faster, new members onboard more easily, and
+                        historical estimates remain meaningful for velocity tracking. The result is less
+                        debate, better alignment, and planning the whole team can trust.
+                    </p>
+
+                    <ul class="list--styled">
+                        <li>
+                            <i class="fas fa-check" aria-hidden="true"></i>
+                            <span><strong>Less subjectivity</strong>: structured voting avoids hand-wavy number guessing.</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check" aria-hidden="true"></i>
+                            <span><strong>More alignment</strong>: everyone rates the same four dimensions.</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check" aria-hidden="true"></i>
+                            <span><strong>Faster convergence</strong>: teams reach consensus quicker with less debate.</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check" aria-hidden="true"></i>
+                            <span><strong>AI-ready</strong>: model-friendly data supports analysis and auto-suggestions.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if (Model.View.SignOutIframeUrl != null)
     {
